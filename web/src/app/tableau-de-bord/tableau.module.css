@@ -1,0 +1,4 @@
+.page { max-width: 480px; margin: 0 auto; padding: 48px 24px; font-family: system-ui, sans-serif; }
+.title { margin: 0 0 8px; font-size: 24px; color: #14262a; }
+.role { margin: 0 0 24px; color: #4b5f63; }
+.button { padding: 12px 20px; border: none; border-radius: 12px; background: #0b6469; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
