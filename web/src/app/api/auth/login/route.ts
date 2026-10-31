@@ -4,6 +4,7 @@ import { z } from "zod";
 import type { RowDataPacket } from "mysql2";
 import { pool } from "@/lib/db";
 import { signToken, type Role } from "@/lib/auth";
+import { journaliser } from "@/lib/journal";
 
 const schema = z.object({
   email: z.string().trim().toLowerCase().email(),
@@ -31,13 +32,27 @@ export async function POST(req: Request) {
   const user = rows[0];
 
   const ok = await bcrypt.compare(motDePasse, user?.mot_de_passe ?? DUMMY_HASH);
-  if (!user || !ok) {
+    if (!user || !ok) {
+    if (user) {
+      await journaliser({
+        auteurId: user.id,
+        action: "ECHEC_CONNEXION",
+        typeEntite: "UTILISATEUR",
+        idEntite: user.id,
+      });
+    }
     return erreur(401, "INVALID_CREDENTIALS", "E-mail ou mot de passe incorrect");
   }
   if (!user.actif) {
     return erreur(403, "ACCOUNT_SUSPENDED", "Compte suspendu");
   }
 
+  await journaliser({
+    auteurId: user.id,
+    action: "CONNEXION",
+    typeEntite: "UTILISATEUR",
+    idEntite: user.id,
+  });
   const token = await signToken({ id: user.id, role: user.role as Role });
   return NextResponse.json({
     token,

@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import type { ResultSetHeader } from "mysql2";
 import { pool } from "@/lib/db";
+import { journaliser } from "@/lib/journal";
 
 const schema = z.object({
   nom: z.string().trim().min(1).max(80),
@@ -32,16 +33,33 @@ export async function POST(req: Request) {
   const { nom, prenom, email, motDePasse, telephone } = parsed.data;
   const hash = await bcrypt.hash(motDePasse, 10);
 
+    const conn = await pool.getConnection();
   try {
-    const [result] = await pool.execute<ResultSetHeader>(
+    await conn.beginTransaction();
+    const [result] = await conn.execute<ResultSetHeader>(
       "INSERT INTO utilisateur (nom, prenom, email, mot_de_passe, telephone, role) VALUES (?, ?, ?, ?, ?, 'CITOYEN')",
       [nom, prenom, email, hash, telephone ?? null]
     );
+    await journaliser(
+      {
+        auteurId: result.insertId,
+        action: "INSCRIPTION",
+        typeEntite: "UTILISATEUR",
+        idEntite: result.insertId,
+        nouvelleValeur: "CITOYEN",
+      },
+      conn
+    );
+    await conn.commit();
     return NextResponse.json({ id: result.insertId, email, role: "CITOYEN" }, { status: 201 });
   } catch (e) {
+    await conn.rollback();
     if ((e as { code?: string }).code === "ER_DUP_ENTRY") {
       return erreur(409, "EMAIL_EXISTS", "Cet e-mail est déjà utilisé");
     }
     return erreur(500, "SERVER_ERROR", "Erreur interne");
+  } finally {
+    conn.release();
   }
+
 }
