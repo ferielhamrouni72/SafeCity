@@ -4,8 +4,12 @@ const echapper = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 export async function envoyerLienReinitialisation(destinataire: string, lien: string) {
-  // Sans configuration SMTP (développement), le lien s'affiche dans le terminal
   if (!process.env.SMTP_HOST) {
+    // En production, ne jamais écrire un lien de réinitialisation dans les logs
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("SMTP_HOST manquant : e-mail de réinitialisation non envoyé");
+    }
+    // Développement : le lien s'affiche dans le terminal
     console.log(`[DEV] Lien de réinitialisation pour ${destinataire} : ${lien}`);
     return;
   }

@@ -14,6 +14,7 @@ import com.iset.safecity.data.AuthRepository
 import com.iset.safecity.data.TokenStore
 import com.iset.safecity.databinding.ActivityLoginBinding
 import com.iset.safecity.ui.home.HomeActivity
+import com.iset.safecity.ui.register.RegisterActivity
 import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
@@ -39,9 +40,13 @@ class LoginActivity : AppCompatActivity() {
         }
 
         binding.tvRegister.setOnClickListener {
-            // TODO : ouvrir l'écran d'inscription de votre binôme, ex.
-            // startActivity(Intent(this, RegisterActivity::class.java))
-            Toast.makeText(this, "Inscription : à venir", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, RegisterActivity::class.java))
+        }
+
+        // Arrivée depuis l'inscription : e-mail pré-rempli + message de confirmation
+        intent.getStringExtra(EXTRA_EMAIL)?.let { binding.etEmail.setText(it) }
+        if (savedInstanceState == null && intent.getBooleanExtra(EXTRA_REGISTERED, false)) {
+            Toast.makeText(this, "Compte créé. Connectez-vous.", Toast.LENGTH_LONG).show()
         }
 
         lifecycleScope.launch {
@@ -59,5 +64,10 @@ class LoginActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    companion object {
+        const val EXTRA_EMAIL = "extra_email"
+        const val EXTRA_REGISTERED = "extra_registered"
     }
 }

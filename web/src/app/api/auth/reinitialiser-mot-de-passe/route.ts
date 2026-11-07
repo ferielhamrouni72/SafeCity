@@ -5,10 +5,11 @@ import { z } from "zod";
 import type { RowDataPacket } from "mysql2";
 import { pool } from "@/lib/db";
 import { journaliser } from "@/lib/journal";
+import { motDePasseSchema } from "@/lib/password";
 
 const schema = z.object({
   token: z.string().regex(/^[a-f0-9]{64}$/),
-  motDePasse: z.string().min(8).max(72),
+  motDePasse: motDePasseSchema,
 });
 
 function erreur(status: number, code: string, message: string) {
@@ -29,10 +30,14 @@ export async function POST(req: Request) {
   try {
     await conn.beginTransaction();
 
-    // Jeton valable : non utilisé et non expiré (verrouillé pour éviter une double utilisation)
+    // Jeton valable : non utilisé, non expiré, et compte toujours actif
+    // (verrouillé pour éviter une double utilisation)
     const [rows] = await conn.execute<RowDataPacket[]>(
-      `SELECT id, utilisateur_id FROM reinitialisation_mdp
-       WHERE token_hash = ? AND utilise = 0 AND expire_le > NOW() FOR UPDATE`,
+      `SELECT r.id, r.utilisateur_id
+         FROM reinitialisation_mdp r
+         JOIN utilisateur u ON u.id = r.utilisateur_id
+        WHERE r.token_hash = ? AND r.utilise = 0 AND r.expire_le > NOW() AND u.actif = 1
+          FOR UPDATE OF r`,
       [tokenHash]
     );
     const jeton = rows[0];
@@ -62,7 +67,7 @@ export async function POST(req: Request) {
     await conn.commit();
     return NextResponse.json({ message: "Mot de passe modifié." });
   } catch (e) {
-    await conn.rollback();
+    await conn.rollback().catch(() => {});
     console.error("Échec de la réinitialisation :", e);
     return erreur(500, "SERVER_ERROR", "Erreur serveur");
   } finally {

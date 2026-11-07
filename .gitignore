@@ -1,2 +1,8 @@
 .env
+!.env.example
 node_modules/
+*.log
+hs_err_pid*
+replay_pid*
+.idea/
+.kotlin/

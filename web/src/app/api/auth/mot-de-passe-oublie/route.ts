@@ -24,38 +24,50 @@ export async function POST(req: Request) {
   }
   const { email } = parsed.data;
 
-  const [rows] = await pool.execute<RowDataPacket[]>(
-    "SELECT id, actif FROM utilisateur WHERE email = ?",
-    [email]
-  );
-  const user = rows[0];
-
-  if (user && user.actif) {
-    const token = randomBytes(32).toString("hex"); // 64 caractères
-    const hash = createHash("sha256").update(token).digest("hex");
-
-    // Les anciens liens non utilisés deviennent invalides
-    await pool.execute(
-      "UPDATE reinitialisation_mdp SET utilise = 1 WHERE utilisateur_id = ? AND utilise = 0",
-      [user.id]
+  try {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      "SELECT id, actif FROM utilisateur WHERE email = ?",
+      [email]
     );
-    await pool.execute(
-      "INSERT INTO reinitialisation_mdp (utilisateur_id, token_hash, expire_le) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 HOUR))",
-      [user.id, hash]
-    );
-    await journaliser({
-      auteurId: user.id,
-      action: "DEMANDE_REINITIALISATION",
-      typeEntite: "UTILISATEUR",
-      idEntite: user.id,
-    });
+    const user = rows[0];
 
-    const base = process.env.APP_URL ?? new URL(req.url).origin;
-    try {
-      await envoyerLienReinitialisation(email, `${base}/reinitialiser-mot-de-passe?token=${token}`);
-    } catch (e) {
-      console.error("Échec d'envoi de l'e-mail :", e);
+    if (user && user.actif) {
+      // Le lien ne doit JAMAIS être construit à partir de l'en-tête Host de la requête
+      // (sinon un attaquant peut faire pointer le lien du mail vers son propre site).
+      const base = process.env.APP_URL?.replace(/\/+$/, "");
+      if (!base) {
+        console.error("APP_URL manquant : aucun lien de réinitialisation envoyé.");
+        return NextResponse.json(REPONSE);
+      }
+
+      const token = randomBytes(32).toString("hex"); // 64 caractères
+      const hash = createHash("sha256").update(token).digest("hex");
+
+      // Les anciens liens non utilisés deviennent invalides
+      await pool.execute(
+        "UPDATE reinitialisation_mdp SET utilise = 1 WHERE utilisateur_id = ? AND utilise = 0",
+        [user.id]
+      );
+      await pool.execute(
+        "INSERT INTO reinitialisation_mdp (utilisateur_id, token_hash, expire_le) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 HOUR))",
+        [user.id, hash]
+      );
+      await journaliser({
+        auteurId: user.id,
+        action: "DEMANDE_REINITIALISATION",
+        typeEntite: "UTILISATEUR",
+        idEntite: user.id,
+      });
+
+      try {
+        await envoyerLienReinitialisation(email, `${base}/reinitialiser-mot-de-passe?token=${token}`);
+      } catch (e) {
+        console.error("Échec d'envoi de l'e-mail :", e);
+      }
     }
+  } catch (e) {
+    // Erreur base de données : on ne révèle rien non plus
+    console.error("Échec de la demande de réinitialisation :", e);
   }
 
   return NextResponse.json(REPONSE);
