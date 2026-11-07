@@ -11,14 +11,8 @@ export type ActionJournal =
   | "CHANGEMENT_TYPE"
   | "CHANGEMENT_GRAVITE"
   | "SUSPENSION_COMPTE"
-<<<<<<< HEAD
-  | "REACTIVATION_COMPTE"
   | "DEMANDE_REINITIALISATION"
-  | "REINITIALISATION_MDP"
-  | "CREATION_AGENT";
-=======
   | "REACTIVATION_COMPTE";
->>>>>>> origin/feriel
 
 export type TypeEntite = "UTILISATEUR" | "INCIDENT" | "CATEGORIE";
 
@@ -49,8 +43,4 @@ export async function journaliser(e: EntreeJournal, db: Executor = pool) {
       coupe(e.nouvelleValeur),
     ]
   );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> origin/feriel
