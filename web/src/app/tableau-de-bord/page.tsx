@@ -1,6 +1,9 @@
 "use client";
 
+<<<<<<< HEAD
 import Link from "next/link";
+=======
+>>>>>>> origin/feriel
 import styles from "./tableau.module.css";
 import { useTableauDeBord } from "./useTableauDeBord";
 
@@ -13,11 +16,14 @@ export default function TableauDeBordPage() {
     <main className={styles.page}>
       <h1 className={styles.title}>Bonjour {session.utilisateur.prenom}</h1>
       <p className={styles.role}>Rôle : {session.utilisateur.role}</p>
+<<<<<<< HEAD
       {session.utilisateur.role === "ADMINISTRATEUR" && (
         <Link href="/inscription" className={`${styles.button} ${styles.lien}`}>
           Ajouter un agent
         </Link>
       )}
+=======
+>>>>>>> origin/feriel
       <button onClick={deconnexion} className={styles.button}>Se déconnecter</button>
     </main>
   );

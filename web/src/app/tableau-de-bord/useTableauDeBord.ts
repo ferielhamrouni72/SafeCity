@@ -23,7 +23,11 @@ export function useTableauDeBord() {
       return JSON.parse(brut) as Session;
     } catch {
       return null;
+<<<<<<< HEAD
     } 
+=======
+    }
+>>>>>>> origin/feriel
   }, [brut]);
 
   useEffect(() => {

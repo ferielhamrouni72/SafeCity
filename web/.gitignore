@@ -39,6 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+<<<<<<< HEAD
 
 # exemple de configuration à versionner
 !.env.example
+=======
+>>>>>>> origin/feriel

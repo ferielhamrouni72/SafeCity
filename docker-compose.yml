@@ -19,6 +19,7 @@ services:
       timeout: 5s
       retries: 10
 
+<<<<<<< HEAD
   phpmyadmin:
     image: phpmyadmin:5
     container_name: safecity-phpmyadmin
@@ -33,5 +34,7 @@ services:
       - "8080:80"
 
 
+=======
+>>>>>>> origin/feriel
 volumes:
   mysql_data:

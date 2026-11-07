@@ -75,6 +75,13 @@ console.log(styles);
             </button>
           </form>
 
+<<<<<<< HEAD
+=======
+          <p className={styles.footer}>
+            Pas encore de compte ?{" "}
+            <Link href="/inscription" className={styles.link}>Créer un compte</Link>
+          </p>
+>>>>>>> origin/feriel
         </section>
       </div>
     </main>

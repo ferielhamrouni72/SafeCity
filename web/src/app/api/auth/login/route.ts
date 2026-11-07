@@ -58,5 +58,9 @@ export async function POST(req: Request) {
     token,
     utilisateur: { id: user.id, nom: user.nom, prenom: user.prenom, email: user.email, role: user.role },
   });
+<<<<<<< HEAD
 }
 
+=======
+}
+>>>>>>> origin/feriel
