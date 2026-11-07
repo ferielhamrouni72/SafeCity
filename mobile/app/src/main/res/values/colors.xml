@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="sc_primary">#0D6670</color>
+    <color name="sc_header_start">#0A4A52</color>
+    <color name="sc_header_end">#14727B</color>
+    <color name="sc_eyebrow">#A7E3D8</color>
+    <color name="sc_field_bg">#F4F6F5</color>
+    <color name="sc_field_stroke">#E6EAE9</color>
+    <color name="sc_text">#1B2B2D</color>
+    <color name="sc_muted">#5B6B6E</color>
+</resources>
