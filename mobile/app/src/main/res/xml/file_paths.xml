@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dossier où l'appareil photo a le droit d'écrire (cache de l'application, jamais public) -->
+<paths>
+    <cache-path name="camera" path="camera/" />
+</paths>
