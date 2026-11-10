@@ -7,6 +7,7 @@ import androidx.lifecycle.lifecycleScope
 import com.iset.safecity.data.TokenStore
 import com.iset.safecity.databinding.ActivityHomeBinding
 import com.iset.safecity.ui.login.LoginActivity
+import com.iset.safecity.ui.photo.PhotoActivity
 import kotlinx.coroutines.launch
 
 class HomeActivity : AppCompatActivity() {
@@ -17,6 +18,10 @@ class HomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        binding.btnPhoto.setOnClickListener {
+            startActivity(Intent(this, PhotoActivity::class.java))
+        }
 
         binding.btnLogout.setOnClickListener {
             lifecycleScope.launch {

@@ -43,10 +43,11 @@ class LoginActivity : AppCompatActivity() {
         binding.tvRegister.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
         }
+
         binding.tvForgot.setOnClickListener {
             startActivity(
                 Intent(this, ForgotPasswordActivity::class.java)
-                    .putExtra("extra_email", binding.etEmail.text?.toString()?.trim().orEmpty())
+                    .putExtra(EXTRA_EMAIL, binding.etEmail.text?.toString()?.trim().orEmpty())
             )
         }
 

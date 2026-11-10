@@ -14,9 +14,10 @@ export type ActionJournal =
   | "REACTIVATION_COMPTE"
   | "DEMANDE_REINITIALISATION"
   | "REINITIALISATION_MDP"
-  | "CREATION_AGENT";
+  | "CREATION_AGENT"
+  | "ENVOI_PHOTO";
 
-export type TypeEntite = "UTILISATEUR" | "INCIDENT" | "CATEGORIE";
+export type TypeEntite = "UTILISATEUR" | "INCIDENT" | "CATEGORIE" | "PHOTO";
 
 type Executor = Pick<Pool, "execute">; // accepte le pool OU une connexion de transaction
 

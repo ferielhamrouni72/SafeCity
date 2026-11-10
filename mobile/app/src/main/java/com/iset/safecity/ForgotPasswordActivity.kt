@@ -14,7 +14,8 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.iset.safecity.data.ForgotPasswordRequest
-import com.iset.safecity.data.PasswordClient
+import com.iset.safecity.data.ApiClient
+import com.iset.safecity.ui.login.LoginActivity
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
@@ -46,6 +47,8 @@ class ForgotPasswordActivity : AppCompatActivity() {
         btnEnvoyer = findViewById(R.id.btnEnvoyer)
         progress = findViewById(R.id.progress)
 
+        intent.getStringExtra(LoginActivity.EXTRA_EMAIL)?.takeIf { it.isNotBlank() }?.let { etEmail.setText(it) }
+
         btnEnvoyer.setOnClickListener { envoyer() }
         findViewById<TextView>(R.id.tvRetour).setOnClickListener { finish() }
     }
@@ -62,7 +65,7 @@ class ForgotPasswordActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                val reponse = PasswordClient.api.forgot(ForgotPasswordRequest(email))
+                val reponse = ApiClient.passwordApi.forgot(ForgotPasswordRequest(email))
                 when {
                     reponse.isSuccessful -> afficher(
                         "Si un compte existe pour cette adresse, un lien de réinitialisation vient d’être envoyé. Pensez à vérifier vos courriers indésirables.",

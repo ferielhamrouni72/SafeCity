@@ -42,3 +42,6 @@ next-env.d.ts
 
 # exemple de configuration à versionner
 !.env.example
+
+# photos envoyées par les citoyens (jamais sur GitHub)
+/uploads/
