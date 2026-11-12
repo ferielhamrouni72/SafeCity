@@ -10,4 +10,17 @@
     <color name="sc_field_stroke">#E6EAE9</color>
     <color name="sc_text">#1B2B2D</color>
     <color name="sc_muted">#5B6B6E</color>
+    <!-- Écran Home -->
+    <color name="sc_alert">#E85C4A</color>
+    <color name="sc_alert_soft">#FCE3DF</color>
+    <color name="sc_warning">#F2A33A</color>
+    <color name="sc_warning_soft">#FBF0C8</color>
+    <color name="sc_warning_text">#8A6200</color>
+    <color name="sc_success">#2E9E6B</color>
+    <color name="sc_success_soft">#DDF0E6</color>
+    <color name="sc_success_text">#1F7A4D</color>
+    <color name="sc_info">#1D6F8F</color>
+    <color name="sc_info_soft">#E1EEF3</color>
+    <color name="sc_avatar_bg">#E3F0EE</color>
+    <color name="sc_map_bg">#E9EFED</color>
 </resources>

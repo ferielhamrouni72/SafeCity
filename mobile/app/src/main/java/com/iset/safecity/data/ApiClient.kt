@@ -15,15 +15,19 @@ object ApiClient {
     private val okHttp = OkHttpClient.Builder()
         .addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC })
         .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(15, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS) // envoi d'une photo
+        .readTimeout(30, TimeUnit.SECONDS) // inclut l'envoi du mail de réinitialisation
         .build()
 
-    val authApi: AuthApi by lazy {
+    private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(okHttp)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(AuthApi::class.java)
     }
+
+    val authApi: AuthApi by lazy { retrofit.create(AuthApi::class.java) }
+    val photoApi: PhotoApi by lazy { retrofit.create(PhotoApi::class.java) }
+    val passwordApi: PasswordApi by lazy { retrofit.create(PasswordApi::class.java) }
 }

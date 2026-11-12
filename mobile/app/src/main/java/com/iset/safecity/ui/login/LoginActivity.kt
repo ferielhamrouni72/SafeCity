@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.iset.safecity.ForgotPasswordActivity
 import com.iset.safecity.data.ApiClient
 import com.iset.safecity.data.AuthRepository
 import com.iset.safecity.data.TokenStore
@@ -41,6 +42,13 @@ class LoginActivity : AppCompatActivity() {
 
         binding.tvRegister.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
+        }
+
+        binding.tvForgot.setOnClickListener {
+            startActivity(
+                Intent(this, ForgotPasswordActivity::class.java)
+                    .putExtra(EXTRA_EMAIL, binding.etEmail.text?.toString()?.trim().orEmpty())
+            )
         }
 
         // Arrivée depuis l'inscription : e-mail pré-rempli + message de confirmation
