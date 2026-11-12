@@ -1,0 +1,1 @@
+DELETE FROM incident WHERE description = 'DONNEES_DE_TEST';
