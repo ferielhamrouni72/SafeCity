@@ -15,4 +15,12 @@ interface PhotoApi {
         @Header("Authorization") authorization: String,
         @Part photo: MultipartBody.Part
     ): Response<PhotoResponse>
+
+    // Signalement complet : photo + position GPS + type (champs multipart)
+    @Multipart
+    @POST("api/incidents")
+    suspend fun report(
+        @Header("Authorization") authorization: String,
+        @Part parts: List<MultipartBody.Part>
+    ): Response<IncidentResponse>
 }

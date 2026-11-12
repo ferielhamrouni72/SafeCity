@@ -3,7 +3,7 @@
 import Link from "next/link";
 import styles from "./tableau.module.css";
 import { useTableauDeBord } from "./useTableauDeBord";
-
+import PhotosRecues from "./PhotosRecues";
 export default function TableauDeBordPage() {
   const { session, deconnexion } = useTableauDeBord();
 
@@ -18,6 +18,9 @@ export default function TableauDeBordPage() {
           Ajouter un agent
         </Link>
       )}
+      {(session.utilisateur.role === "AGENT" || session.utilisateur.role === "ADMINISTRATEUR") && (
+  <PhotosRecues token={session.token} />
+)}
       <button onClick={deconnexion} className={styles.button}>Se déconnecter</button>
     </main>
   );

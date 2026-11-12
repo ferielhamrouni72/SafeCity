@@ -15,7 +15,8 @@ export type ActionJournal =
   | "DEMANDE_REINITIALISATION"
   | "REINITIALISATION_MDP"
   | "CREATION_AGENT"
-  | "ENVOI_PHOTO";
+  | "ENVOI_PHOTO"
+  | "CREATION_INCIDENT";
 
 export type TypeEntite = "UTILISATEUR" | "INCIDENT" | "CATEGORIE" | "PHOTO";
 
