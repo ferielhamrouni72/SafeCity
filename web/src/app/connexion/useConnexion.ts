@@ -38,8 +38,9 @@ export function useConnexion() {
         setErreur(MESSAGES[data?.error?.code] ?? "Une erreur est survenue. Réessayez.");
         return;
       }
-      saveSession(data);
-      router.push("/tableau-de-bord");
+            saveSession(data);
+      const role = data?.utilisateur?.role;
+      router.push(role === "AGENT" || role === "ADMINISTRATEUR" ? "/agent/accueil" : "/tableau-de-bord");
     } catch {
       setErreur("Serveur injoignable. Vérifiez votre connexion.");
     } finally {

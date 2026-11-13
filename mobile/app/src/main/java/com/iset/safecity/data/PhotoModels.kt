@@ -7,3 +7,12 @@ data class PhotoResponse(
     val typeMime: String,
     val taille: Long
 )
+
+// Réponse du serveur après la création d'un signalement : { id, titre, type, latitude, longitude }
+data class IncidentResponse(
+    val id: Long,
+    val titre: String,
+    val type: String,
+    val latitude: Double,
+    val longitude: Double
+)

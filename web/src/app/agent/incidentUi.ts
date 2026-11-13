@@ -24,6 +24,17 @@ export const COULEUR_GRAVITE: Record<Gravite, string> = {
   FAIBLE: "#2f9e7a",
 };
 
+export const LIBELLE_TYPE: Record<string, string> = {
+  ACCIDENT: "Accident",
+  INCENDIE: "Incendie",
+  INONDATION: "Inondation",
+  FUITE_EAU: "Fuite d’eau",
+  ARBRE_TOMBE: "Arbre tombé",
+  NID_DE_POULE: "Nid-de-poule",
+  INFRASTRUCTURE: "Infrastructure",
+  AUTRE: "Autre",
+};
+
 export const COULEUR_NON_EVALUEE = "#c3cecf";
 
 export function couleurGravite(g: Gravite | null): string {
@@ -31,7 +42,7 @@ export function couleurGravite(g: Gravite | null): string {
 }
 
 // Passer à true quand la page correspondante existe : les liens deviennent cliquables
-export const PAGES = { incidents: false, carte: false };
+export const PAGES = { incidents: true, carte: false };
 
 export function tempsRelatif(iso: string, maintenant: number): string {
   const t = new Date(iso);

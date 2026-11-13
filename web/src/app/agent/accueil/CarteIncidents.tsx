@@ -27,9 +27,8 @@ export default function CarteIncidents({ points }: { points: PointCarte[] }) {
       const L = await import("leaflet");
       if (annule || !conteneur.current || carteRef.current) return;
       const carte = L.map(conteneur.current, { scrollWheelZoom: false }).setView(CENTRE_PAR_DEFAUT, 12);
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-        attribution: "© OpenStreetMap contributors © CARTO",
-        subdomains: "abcd",
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap contributors",
         maxZoom: 19,
       }).addTo(carte);
       lRef.current = L;

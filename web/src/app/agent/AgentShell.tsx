@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import styles from "./agent.module.css";
 import { AgentContext } from "./AgentContext";
 import { useAgentSession } from "./useAgentSession";
+import { useCompteurNouveaux } from "./useCompteurNouveaux";
 import {
   IconAlert, IconBell, IconChart, IconGrid, IconLogout,
   IconMap, IconSearch, IconUser, Logo,
@@ -12,7 +13,7 @@ import {
 
 const NAV = [
   { href: "/agent/accueil", label: "Accueil", Icon: IconGrid, pret: true },
-  { href: "/agent/incidents", label: "Incidents", Icon: IconAlert, pret: false },
+  { href: "/agent/incidents", label: "Incidents", Icon: IconAlert, pret: true },
   { href: "/agent/carte", label: "Carte", Icon: IconMap, pret: false },
   { href: "/agent/statistiques", label: "Statistiques", Icon: IconChart, pret: false },
   { href: "/agent/administration", label: "Administration", Icon: IconUser, pret: false },
@@ -23,6 +24,7 @@ const LIBELLES = { AGENT: "Agent superviseur", ADMINISTRATEUR: "Administrateur",
 export default function AgentShell({ children }: { children: React.ReactNode }) {
   const { session, deconnexion } = useAgentSession();
   const pathname = usePathname();
+  const nouveaux = useCompteurNouveaux(session?.token ?? "");
 
   if (!session) return null;
 
@@ -55,6 +57,9 @@ export default function AgentShell({ children }: { children: React.ReactNode }) 
               <Link key={href} href={href} className={`${styles.navItem} ${actif ? styles.navActif : ""}`} aria-current={actif ? "page" : undefined}>
                 <Icon />
                 {label}
+                {href === "/agent/incidents" && nouveaux > 0 && (
+                  <span className={styles.badge} aria-label={`${nouveaux} nouveaux incidents`}>{nouveaux}</span>
+                )}
               </Link>
             );
           })}

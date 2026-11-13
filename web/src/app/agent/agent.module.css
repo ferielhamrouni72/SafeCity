@@ -10,6 +10,7 @@
 .navItem:hover { background: rgba(255, 255, 255, 0.06); }
 .navActif { background: #1b6a6c; color: #fff; font-weight: 600; }
 .navActif:hover { background: #1b6a6c; }
+.badge { margin-left: auto; min-width: 22px; padding: 2px 7px; border-radius: 999px; background: #d64545; color: #fff; font-size: 12px; font-weight: 700; line-height: 18px; text-align: center; }
 .navOff { opacity: 0.5; cursor: not-allowed; }
 .navOff:hover { background: none; }
 

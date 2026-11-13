@@ -37,7 +37,7 @@ function Ligne({ incident, maintenant }: { incident: IncidentResume; maintenant:
   );
 
   return PAGES.incidents ? (
-    <Link href={`/agent/incidents?ouvrir=${incident.id}`} className={`${styles.ligne} ${styles.lienLigne}`}>
+    <Link href={`/agent/incidents/${incident.id}`} className={`${styles.ligne} ${styles.lienLigne}`}>
       {contenu}
     </Link>
   ) : (

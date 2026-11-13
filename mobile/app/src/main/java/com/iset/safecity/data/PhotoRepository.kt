@@ -7,9 +7,10 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
 import java.io.IOException
+import java.util.Locale
 
 sealed class PhotoResult {
-    data class Success(val photo: PhotoResponse) : PhotoResult()
+    data class Success(val report: IncidentResponse) : PhotoResult()
     object SessionExpired : PhotoResult()
     data class Error(val message: String) : PhotoResult()
 }
@@ -20,16 +21,24 @@ class PhotoRepository(
 ) {
     private val gson = Gson()
 
-    suspend fun upload(file: File): PhotoResult {
+    /** Envoie un signalement : la photo, la position GPS et le type d'incident. */
+    suspend fun report(file: File, latitude: Double, longitude: Double, type: String): PhotoResult {
         val token = store.token.first() ?: return PhotoResult.SessionExpired
         return try {
-            val body = file.asRequestBody("image/jpeg".toMediaType())
-            val part = MultipartBody.Part.createFormData("photo", "photo.jpg", body)
-            val res = api.upload("Bearer $token", part)
+            val parts = listOf(
+                MultipartBody.Part.createFormData(
+                    "photo", "photo.jpg", file.asRequestBody("image/jpeg".toMediaType())
+                ),
+                // Locale.US : toujours un point décimal, jamais une virgule
+                MultipartBody.Part.createFormData("latitude", String.format(Locale.US, "%.6f", latitude)),
+                MultipartBody.Part.createFormData("longitude", String.format(Locale.US, "%.6f", longitude)),
+                MultipartBody.Part.createFormData("type", type)
+            )
+            val res = api.report("Bearer $token", parts)
 
             if (res.isSuccessful) {
-                val photo = res.body()
-                if (photo != null) PhotoResult.Success(photo)
+                val body = res.body()
+                if (body != null) PhotoResult.Success(body)
                 else PhotoResult.Error("Réponse vide du serveur.")
             } else {
                 val code = try {
@@ -38,15 +47,15 @@ class PhotoRepository(
                     null
                 }
                 when {
-                    // 401 : jeton absent, invalide ou expiré (il dure 2 h)
                     res.code() == 401 -> PhotoResult.SessionExpired
                     code == "ACCOUNT_SUSPENDED" ->
                         PhotoResult.Error("Votre compte est suspendu. Contactez l'administrateur.")
                     code == "FORBIDDEN" ->
-                        PhotoResult.Error("Seuls les citoyens peuvent envoyer des photos.")
+                        PhotoResult.Error("Seuls les citoyens peuvent envoyer un signalement.")
                     code == "FILE_TOO_LARGE" -> PhotoResult.Error("Photo trop volumineuse (5 Mo maximum).")
                     code == "UNSUPPORTED_TYPE" -> PhotoResult.Error("Format non supporté (JPEG, PNG ou WebP).")
-                    code == "TOO_MANY_UPLOADS" -> PhotoResult.Error("Trop d'envois. Réessayez dans une heure.")
+                    code == "TOO_MANY_UPLOADS" -> PhotoResult.Error("Trop de signalements. Réessayez plus tard.")
+                    code == "VALIDATION_ERROR" -> PhotoResult.Error("Position GPS invalide. Actualisez votre position.")
                     else -> PhotoResult.Error("Erreur serveur (${res.code()}).")
                 }
             }

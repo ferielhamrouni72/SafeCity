@@ -1,0 +1,7 @@
+.pastille { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.nouveau { background: #fde8e8; color: #c53030; }
+.valide { background: #e1eefb; color: #2b6cb0; }
+.enCours { background: #fdf0dc; color: #b7791f; }
+.resolu { background: #dff3ea; color: #1f7a5a; }
+.rejete { background: #eceff0; color: #5b6b6e; }
+.verifier { background: #fdf3d0; color: #8a6d0a; }

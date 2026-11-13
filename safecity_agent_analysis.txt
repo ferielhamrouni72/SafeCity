@@ -1,0 +1,1907 @@
+
+
+========================================
+FICHIER : web/src/app/agent/AgentShell.tsx
+========================================
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import styles from "./agent.module.css";
+import { AgentContext } from "./AgentContext";
+import { useAgentSession } from "./useAgentSession";
+import { useCompteurNouveaux } from "./useCompteurNouveaux";
+import {
+  IconAlert, IconBell, IconChart, IconGrid, IconLogout,
+  IconMap, IconSearch, IconUser, Logo,
+} from "./icons";
+
+const NAV = [
+  { href: "/agent/accueil", label: "Accueil", Icon: IconGrid, pret: true },
+  { href: "/agent/incidents", label: "Incidents", Icon: IconAlert, pret: true },
+  { href: "/agent/carte", label: "Carte", Icon: IconMap, pret: false },
+  { href: "/agent/statistiques", label: "Statistiques", Icon: IconChart, pret: false },
+  { href: "/agent/administration", label: "Administration", Icon: IconUser, pret: false },
+];
+
+const LIBELLES = { AGENT: "Agent superviseur", ADMINISTRATEUR: "Administrateur", CITOYEN: "Citoyen" };
+
+export default function AgentShell({ children }: { children: React.ReactNode }) {
+  const { session, deconnexion } = useAgentSession();
+  const pathname = usePathname();
+  const nouveaux = useCompteurNouveaux(session?.token ?? "");
+
+  if (!session) return null;
+
+  const { prenom, nom, role } = session.utilisateur;
+  const initiales = `${prenom?.[0] ?? ""}${nom?.[0] ?? ""}`.toUpperCase();
+
+  return (
+    <div className={styles.shell}>
+      <aside className={styles.sidebar}>
+        <div className={styles.brand}>
+          <Logo />
+          <div>
+            <p className={styles.brandName}>SafeCity</p>
+            <p className={styles.brandSub}>SUPERVISION</p>
+          </div>
+        </div>
+
+        <nav className={styles.nav} aria-label="Navigation principale">
+          {NAV.map(({ href, label, Icon, pret }) => {
+            const actif = pathname === href || pathname.startsWith(href + "/");
+            if (!pret) {
+              return (
+                <span key={href} className={`${styles.navItem} ${styles.navOff}`} aria-disabled="true" title="Bientôt disponible">
+                  <Icon />
+                  {label}
+                </span>
+              );
+            }
+            return (
+              <Link key={href} href={href} className={`${styles.navItem} ${actif ? styles.navActif : ""}`} aria-current={actif ? "page" : undefined}>
+                <Icon />
+                {label}
+                {href === "/agent/incidents" && nouveaux > 0 && (
+                  <span className={styles.badge} aria-label={`${nouveaux} nouveaux incidents`}>{nouveaux}</span>
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className={styles.user}>
+          <span className={styles.avatar}>{initiales}</span>
+          <div className={styles.userInfo}>
+            <p className={styles.userName}>{prenom} {nom}</p>
+            <p className={styles.userRole}>{LIBELLES[role]}</p>
+          </div>
+          <button onClick={deconnexion} className={styles.logout} aria-label="Se déconnecter" title="Se déconnecter">
+            <IconLogout />
+          </button>
+        </div>
+      </aside>
+
+      <div className={styles.contenu}>
+        <header className={styles.topbar}>
+          <div className={styles.search}>
+            <IconSearch />
+            <input type="search" placeholder="Rechercher…" aria-label="Rechercher" disabled />
+          </div>
+          <div className={styles.topRight}>
+            <span className={styles.live}>
+              <span className={styles.dot} />
+              En direct
+            </span>
+            <button className={styles.bell} aria-label="Notifications"><IconBell /></button>
+            <span className={styles.avatar}>{initiales}</span>
+          </div>
+        </header>
+
+        <main className={styles.main}>
+          <AgentContext.Provider value={session}>{children}</AgentContext.Provider>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+
+========================================
+FICHIER : web/src/app/agent/agent.module.css
+========================================
+.shell { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; background: #f3f6f5; color: #14262a; }
+
+.sidebar { position: sticky; top: 0; display: flex; flex-direction: column; height: 100vh; padding: 24px 20px; background: #132b33; color: #cfe0e2; }
+.brand { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; }
+.brandName { margin: 0; font-size: 22px; font-weight: 700; color: #fff; }
+.brandSub { margin: 2px 0 0; font-size: 10px; letter-spacing: 0.2em; color: #7fa9ad; }
+
+.nav { display: flex; flex-direction: column; gap: 6px; }
+.navItem { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 12px; font-size: 15px; font-weight: 500; color: #cfe0e2; text-decoration: none; }
+.navItem:hover { background: rgba(255, 255, 255, 0.06); }
+.navActif { background: #1b6a6c; color: #fff; font-weight: 600; }
+.navActif:hover { background: #1b6a6c; }
+.badge { margin-left: auto; min-width: 22px; padding: 2px 7px; border-radius: 999px; background: #d64545; color: #fff; font-size: 12px; font-weight: 700; line-height: 18px; text-align: center; }
+.navOff { opacity: 0.5; cursor: not-allowed; }
+.navOff:hover { background: none; }
+
+.user { display: flex; align-items: center; gap: 12px; margin-top: auto; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+.avatar { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%; background: #c9e6e3; color: #14414a; font-size: 14px; font-weight: 700; }
+.userInfo { min-width: 0; flex: 1; }
+.userName { margin: 0; overflow: hidden; font-size: 14px; font-weight: 600; color: #fff; text-overflow: ellipsis; white-space: nowrap; }
+.userRole { margin: 2px 0 0; font-size: 12px; color: #7fa9ad; }
+.logout { display: flex; padding: 8px; border: none; border-radius: 8px; background: none; color: #cfe0e2; cursor: pointer; }
+.logout:hover { background: rgba(255, 255, 255, 0.1); }
+
+.contenu { display: flex; min-width: 0; flex-direction: column; }
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 32px; background: #fff; border-bottom: 1px solid #e3e8e8; }
+.search { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 330px; padding: 0 16px; border: 1px solid #e3e8e8; border-radius: 12px; background: #f4f6f6; color: #8a9a9d; }
+.search input { width: 100%; padding: 14px 0; border: none; background: none; font: inherit; font-size: 14px; outline: none; }
+.topRight { display: flex; align-items: center; gap: 18px; }
+.live { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #4b5f63; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #1f9d6a; }
+.bell { display: flex; padding: 6px; border: none; background: none; color: #14262a; cursor: pointer; }
+
+.main { padding: 24px 48px 48px; }
+
+@media (max-width: 900px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar { position: static; height: auto; flex-direction: row; flex-wrap: wrap; gap: 12px; padding: 12px 16px; }
+  .brand { margin-bottom: 0; }
+  .nav { flex-direction: row; flex-wrap: wrap; }
+  .user { margin-top: 0; padding-top: 0; border-top: none; }
+  .main { padding: 20px 16px 32px; }
+}
+
+
+========================================
+FICHIER : web/src/app/agent/icons.tsx
+========================================
+import type { SVGProps } from "react";
+
+function Base(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    />
+  );
+}
+
+export const IconGrid = () => (
+  <Base>
+    <rect x="3" y="3" width="7" height="7" rx="1.5" />
+    <rect x="14" y="3" width="7" height="7" rx="1.5" />
+    <rect x="3" y="14" width="7" height="7" rx="1.5" />
+    <rect x="14" y="14" width="7" height="7" rx="1.5" />
+  </Base>
+);
+
+export const IconAlert = () => (
+  <Base>
+    <path d="M12 3 2.5 20h19L12 3z" />
+    <path d="M12 10v5" />
+    <path d="M12 18h.01" />
+  </Base>
+);
+
+export const IconMap = () => (
+  <Base>
+    <path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z" />
+    <path d="M9 4v14" />
+    <path d="M15 6v14" />
+  </Base>
+);
+
+export const IconChart = () => (
+  <Base>
+    <path d="M4 20V10" />
+    <path d="M10 20V4" />
+    <path d="M16 20v-8" />
+    <path d="M3 20h18" />
+  </Base>
+);
+
+export const IconUser = () => (
+  <Base>
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4 21c0-4 3.5-7 8-7s8 3 8 7" />
+  </Base>
+);
+
+export const IconSearch = () => (
+  <Base width="18" height="18">
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3.5-3.5" />
+  </Base>
+);
+
+export const IconBell = () => (
+  <Base>
+    <path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4l2-2z" />
+    <path d="M10 21h4" />
+  </Base>
+);
+
+export const IconLogout = () => (
+  <Base width="18" height="18">
+    <path d="M9 21H5V3h4" />
+    <path d="M16 17l5-5-5-5" />
+    <path d="M21 12H9" />
+  </Base>
+);
+
+export const Logo = () => (
+  <svg width="44" height="44" viewBox="0 0 48 48" aria-hidden="true">
+    <path d="M24 3l17 9.5v23L24 45 7 35.5v-23L24 3z" fill="#1f9d8a" />
+    <path d="M17 17l14 14M31 17L17 31" stroke="#fff" strokeWidth="4" strokeLinecap="round" />
+  </svg>
+);
+export const IconPin = () => (
+  <Base width="14" height="14">
+    <path d="M12 21s7-6 7-11a7 7 0 1 0-14 0c0 5 7 11 7 11z" />
+    <circle cx="12" cy="10" r="2.5" />
+  </Base>
+);
+
+export const IconChevron = () => (
+  <Base width="18" height="18">
+    <path d="m9 6 6 6-6 6" />
+  </Base>
+);
+
+
+========================================
+FICHIER : web/src/app/agent/incidentUi.ts
+========================================
+export type Statut = "NOUVEAU" | "VALIDE" | "EN_COURS" | "RESOLU" | "REJETE" | "A_VERIFIER";
+export type Gravite = "FAIBLE" | "MOYENNE" | "ELEVEE" | "CRITIQUE";
+
+export const LIBELLE_STATUT: Record<Statut, string> = {
+  NOUVEAU: "Nouveau",
+  VALIDE: "Validé",
+  EN_COURS: "En cours",
+  RESOLU: "Résolu",
+  REJETE: "Rejeté",
+  A_VERIFIER: "À vérifier",
+};
+
+export const LIBELLE_GRAVITE: Record<Gravite, string> = {
+  CRITIQUE: "Critique",
+  ELEVEE: "Élevée",
+  MOYENNE: "Moyenne",
+  FAIBLE: "Faible",
+};
+
+export const COULEUR_GRAVITE: Record<Gravite, string> = {
+  CRITIQUE: "#d64545",
+  ELEVEE: "#e8833a",
+  MOYENNE: "#e0a82e",
+  FAIBLE: "#2f9e7a",
+};
+
+export const LIBELLE_TYPE: Record<string, string> = {
+  ACCIDENT: "Accident",
+  INCENDIE: "Incendie",
+  INONDATION: "Inondation",
+  FUITE_EAU: "Fuite d’eau",
+  ARBRE_TOMBE: "Arbre tombé",
+  NID_DE_POULE: "Nid-de-poule",
+  INFRASTRUCTURE: "Infrastructure",
+  AUTRE: "Autre",
+};
+
+export const COULEUR_NON_EVALUEE = "#c3cecf";
+
+export function couleurGravite(g: Gravite | null): string {
+  return g ? COULEUR_GRAVITE[g] : COULEUR_NON_EVALUEE;
+}
+
+// Passer à true quand la page correspondante existe : les liens deviennent cliquables
+export const PAGES = { incidents: true, carte: false };
+
+export function tempsRelatif(iso: string, maintenant: number): string {
+  const t = new Date(iso);
+  if (Number.isNaN(t.getTime())) return "";
+  const minutes = Math.floor((maintenant - t.getTime()) / 60000);
+  if (minutes < 1) return "À l’instant";
+  if (minutes < 60) return `Il y a ${minutes} min`;
+  const heure = t.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  const jour = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const ecart = Math.round((jour(new Date(maintenant)) - jour(t)) / 86400000);
+  if (ecart <= 0) return `Aujourd’hui, ${heure}`;
+  if (ecart === 1) return `Hier, ${heure}`;
+  return `${t.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })}, ${heure}`;
+}
+
+
+========================================
+FICHIER : web/src/app/agent/incidents/page.tsx
+========================================
+"use client";
+
+import { useState, type CSSProperties } from "react";
+import Link from "next/link";
+import { useAgent } from "../AgentContext";
+import { IconAlert, IconChevron, IconPin, IconSearch } from "../icons";
+import StatutPastille from "../StatutPastille";
+import {
+  LIBELLE_GRAVITE, LIBELLE_STATUT, LIBELLE_TYPE,
+  couleurGravite, tempsRelatif, type Gravite, type Statut,
+} from "../incidentUi";
+import styles from "./incidents.module.css";
+import { useIncidents } from "./useIncidents";
+
+const ONGLETS: { cle: Statut | ""; label: string }[] = [
+  { cle: "", label: "Tous" },
+  { cle: "NOUVEAU", label: "Nouveau" },
+  { cle: "EN_COURS", label: "En cours" },
+  { cle: "A_VERIFIER", label: "À vérifier" },
+  { cle: "RESOLU", label: "Résolu" },
+];
+
+const STATUTS = Object.keys(LIBELLE_STATUT) as Statut[];
+const GRAVITES = Object.keys(LIBELLE_GRAVITE) as Gravite[];
+
+function IconFiltre() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
+    </svg>
+  );
+}
+
+export default function IncidentsPage() {
+  const session = useAgent();
+  const [date] = useState(() =>
+    new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long" })
+  );
+  const [filtresOuverts, setFiltresOuverts] = useState(false);
+  const { filtres, modifier, donnees, maintenant, erreur, chargement, totalPages } =
+    useIncidents(session?.token ?? "");
+
+  if (!session) return null;
+
+  const incidents = donnees?.incidents ?? [];
+  const filtresActifs = [filtres.gravite, filtres.type].filter(Boolean).length;
+
+  return (
+    <>
+      <div className={styles.entete}>
+        <div>
+          <h1 className={styles.titre}>Incidents</h1>
+          <p className={styles.sous}>Suivez et traitez les signalements.</p>
+        </div>
+        <p className={styles.date}>Aujourd’hui, {date}</p>
+      </div>
+
+      {erreur && <p role="alert" className={styles.erreur}>{erreur}</p>}
+
+      <section className={styles.bloc}>
+        <div className={styles.outils}>
+          <label className={styles.recherche}>
+            <IconSearch />
+            <input
+              type="search"
+              value={filtres.q}
+              onChange={(e) => modifier({ q: e.target.value })}
+              placeholder="Rechercher un incident…"
+              aria-label="Rechercher un incident"
+            />
+          </label>
+          <button
+            type="button"
+            className={styles.boutonFiltres}
+            onClick={() => setFiltresOuverts((v) => !v)}
+            aria-expanded={filtresOuverts}
+          >
+            <IconFiltre />
+            Filtres{filtresActifs > 0 ? ` (${filtresActifs})` : ""}
+          </button>
+        </div>
+
+        {filtresOuverts && (
+          <div className={styles.panneau}>
+            <label className={styles.champ}>
+              Statut
+              <select value={filtres.statut} onChange={(e) => modifier({ statut: e.target.value as Statut | "" })}>
+                <option value="">Tous</option>
+                {STATUTS.map((s) => <option key={s} value={s}>{LIBELLE_STATUT[s]}</option>)}
+              </select>
+            </label>
+            <label className={styles.champ}>
+              Gravité
+              <select value={filtres.gravite} onChange={(e) => modifier({ gravite: e.target.value as Gravite | "" })}>
+                <option value="">Toutes</option>
+                {GRAVITES.map((g) => <option key={g} value={g}>{LIBELLE_GRAVITE[g]}</option>)}
+              </select>
+            </label>
+            <label className={styles.champ}>
+              Type
+              <select value={filtres.type} onChange={(e) => modifier({ type: e.target.value })}>
+                <option value="">Tous</option>
+                {Object.entries(LIBELLE_TYPE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              </select>
+            </label>
+            <button
+              type="button"
+              className={styles.reinit}
+              onClick={() => modifier({ statut: "", gravite: "", type: "", q: "" })}
+            >
+              Réinitialiser
+            </button>
+          </div>
+        )}
+
+        <div className={styles.onglets} role="tablist" aria-label="Filtrer par statut">
+          {ONGLETS.map(({ cle, label }) => {
+            const actif = filtres.statut === cle;
+            const nombre = donnees?.compteurs[cle === "" ? "TOUS" : cle];
+            return (
+              <button
+                key={label}
+                type="button"
+                role="tab"
+                aria-selected={actif}
+                className={`${styles.onglet} ${actif ? styles.ongletActif : ""}`}
+                onClick={() => modifier({ statut: cle })}
+              >
+                {label}
+                {nombre !== undefined && <span className={styles.compteur}>{nombre}</span>}
+              </button>
+            );
+          })}
+        </div>
+
+        {chargement ? (
+          <p className={styles.vide}>Chargement…</p>
+        ) : incidents.length === 0 ? (
+          <p className={styles.vide}>Aucun incident ne correspond à votre recherche.</p>
+        ) : (
+          <ul className={styles.liste}>
+            {incidents.map((i) => (
+              <li key={i.id}>
+                <Link href={`/agent/incidents/${i.id}`} className={styles.ligne}>
+                  <span className={styles.icone} style={{ "--c": couleurGravite(i.gravite) } as CSSProperties}>
+                    <IconAlert />
+                  </span>
+                  <div className={styles.texte}>
+                    <p className={styles.titreLigne}>{i.titre}</p>
+                    <p className={styles.lieu}>
+                      <IconPin />
+                      {i.lieu ?? LIBELLE_TYPE[i.type] ?? "Lieu non précisé"} • #{i.id}
+                    </p>
+                  </div>
+                  <div className={styles.droite}>
+                    <span className={styles.temps}>{tempsRelatif(i.dateCreation, maintenant)}</span>
+                    <StatutPastille statut={i.statut} />
+                  </div>
+                  <span className={styles.chevron}><IconChevron /></span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {totalPages > 1 && (
+          <div className={styles.pagination}>
+            <button type="button" disabled={filtres.page <= 1} onClick={() => modifier({ page: filtres.page - 1 })}>
+              Précédent
+            </button>
+            <span>Page {filtres.page} sur {totalPages}</span>
+            <button type="button" disabled={filtres.page >= totalPages} onClick={() => modifier({ page: filtres.page + 1 })}>
+              Suivant
+            </button>
+          </div>
+        )}
+      </section>
+    </>
+  );
+}
+
+
+========================================
+FICHIER : web/src/app/agent/incidents/incidents.module.css
+========================================
+.entete { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.titre { margin: 0; font-size: 34px; font-weight: 400; color: #14262a; }
+.sous { margin: 8px 0 0; font-size: 15px; color: #4b5f63; }
+.date { margin: 8px 0 0; font-size: 14px; color: #4b5f63; }
+.erreur { margin: 16px 0 0; font-size: 14px; color: #dc2626; }
+
+.bloc { margin-top: 28px; padding: 24px; border: 1px solid #e3e8e8; border-radius: 16px; background: #fff; box-shadow: 0 1px 2px rgba(20, 38, 42, 0.04); }
+
+.outils { display: flex; gap: 12px; }
+.recherche { display: flex; flex: 1; align-items: center; gap: 10px; padding: 0 16px; border: 1px solid #e3e8e8; border-radius: 12px; background: #fff; color: #8a9a9d; }
+.recherche input { width: 100%; padding: 14px 0; border: none; background: none; font: inherit; font-size: 14px; color: #14262a; outline: none; }
+.boutonFiltres { display: inline-flex; align-items: center; gap: 8px; padding: 0 20px; border: 1px solid #e3e8e8; border-radius: 12px; background: #fff; font: inherit; font-size: 14px; color: #14262a; cursor: pointer; }
+.boutonFiltres:hover { background: #f7f9f9; }
+
+.panneau { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px; margin-top: 16px; padding: 16px; border-radius: 12px; background: #f7f9f9; }
+.champ { display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 600; color: #4b5f63; }
+.champ select { min-width: 160px; padding: 10px 12px; border: 1px solid #e3e8e8; border-radius: 10px; background: #fff; font: inherit; font-size: 14px; color: #14262a; }
+.reinit { padding: 10px 14px; border: none; background: none; font: inherit; font-size: 13px; font-weight: 600; color: #0b6469; cursor: pointer; }
+
+.onglets { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; padding-bottom: 16px; border-bottom: 1px solid #e3e8e8; }
+.onglet { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border: none; border-radius: 10px; background: none; font: inherit; font-size: 13px; font-weight: 500; color: #4b5f63; cursor: pointer; }
+.onglet:hover { background: #f3f6f5; }
+.ongletActif { background: #dff0ee; color: #0b6469; font-weight: 700; }
+.compteur { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; padding: 1px 6px; border-radius: 999px; background: #fff; font-size: 11px; font-weight: 700; }
+
+.liste { margin: 0; padding: 0; list-style: none; }
+.ligne { display: flex; align-items: center; gap: 14px; padding: 14px 8px; border-bottom: 1px solid #e3e8e8; color: inherit; text-decoration: none; }
+.ligne:hover { background: #f7f9f9; }
+.icone { display: flex; flex-shrink: 0; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 12px; background: var(--c); color: #fff; }
+.texte { min-width: 0; flex: 1; }
+.titreLigne { margin: 0; font-size: 15px; font-weight: 600; color: #14262a; }
+.lieu { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-size: 12px; color: #6b7d80; }
+.droite { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.temps { font-size: 11px; color: #8a9a9d; white-space: nowrap; }
+.chevron { display: flex; color: #8a9a9d; }
+.vide { margin: 0; padding: 24px 0 8px; font-size: 14px; color: #4b5f63; }
+
+.pagination { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 20px; font-size: 13px; color: #4b5f63; }
+.pagination button { padding: 8px 14px; border: 1px solid #e3e8e8; border-radius: 10px; background: #fff; font: inherit; font-size: 13px; cursor: pointer; }
+.pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+@media (max-width: 700px) { .entete { flex-direction: column; } .outils { flex-direction: column; } .boutonFiltres { justify-content: center; padding: 12px 20px; } }
+
+
+========================================
+FICHIER : web/src/app/agent/incidents/useIncidents.ts
+========================================
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { clearSession } from "@/lib/session";
+import type { Gravite, Statut } from "../incidentUi";
+
+export type LigneIncident = {
+  id: number;
+  titre: string;
+  type: string;
+  lieu: string | null;
+  statut: Statut;
+  gravite: Gravite | null;
+  priorite: "NORMALE" | "URGENTE";
+  dateCreation: string;
+};
+
+export type Compteurs = Record<"TOUS" | Statut, number>;
+
+type Reponse = {
+  incidents: LigneIncident[];
+  total: number;
+  page: number;
+  limite: number;
+  compteurs: Compteurs;
+};
+
+export type Filtres = {
+  statut: Statut | "";
+  gravite: Gravite | "";
+  type: string;
+  q: string;
+  page: number;
+};
+
+const INITIAL: Filtres = { statut: "", gravite: "", type: "", q: "", page: 1 };
+const LIMITE = 20;
+const INTERVALLE_MS = 15000;
+
+export function useIncidents(token: string) {
+  const router = useRouter();
+  const [filtres, setFiltres] = useState<Filtres>(INITIAL);
+  const [qEffective, setQEffective] = useState("");
+  const [donnees, setDonnees] = useState<Reponse | null>(null);
+  const [maintenant, setMaintenant] = useState(0);
+  const [erreur, setErreur] = useState("");
+  const [chargement, setChargement] = useState(true);
+  const sequence = useRef(0);
+
+  // Toute modification de filtre ramène à la page 1 (sauf le changement de page lui-même)
+  const modifier = useCallback((partiel: Partial<Filtres>) => {
+    setFiltres((f) => ({ ...f, page: 1, ...partiel }));
+  }, []);
+
+  // Recherche : on attend la fin de la saisie avant d'interroger le serveur
+  useEffect(() => {
+    const t = setTimeout(() => setQEffective(filtres.q.trim()), 300);
+    return () => clearTimeout(t);
+  }, [filtres.q]);
+
+  const { statut, gravite, type, page } = filtres;
+
+  const charger = useCallback(async () => {
+    if (!token) return;
+    const numero = ++sequence.current; // ignore les réponses arrivées en retard
+    const p = new URLSearchParams({ page: String(page), limite: String(LIMITE) });
+    if (statut) p.set("statut", statut);
+    if (gravite) p.set("gravite", gravite);
+    if (type) p.set("type", type);
+    if (qEffective) p.set("q", qEffective);
+
+    try {
+      const res = await fetch(`/api/agent/incidents?${p.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
+      if (numero !== sequence.current) return;
+      if (res.status === 401) {
+        clearSession();
+        router.replace("/connexion");
+        return;
+      }
+      if (res.status === 403) {
+        setErreur("Accès réservé aux agents.");
+        return;
+      }
+      if (!res.ok) {
+        setErreur("Impossible de charger les incidents.");
+        return;
+      }
+      setDonnees(await res.json());
+      setMaintenant(Date.now());
+      setErreur("");
+    } catch {
+      if (numero === sequence.current) setErreur("Serveur injoignable. Nouvelle tentative automatique.");
+    } finally {
+      if (numero === sequence.current) setChargement(false);
+    }
+  }, [token, statut, gravite, type, qEffective, page, router]);
+
+  useEffect(() => {
+    const premier = setTimeout(charger, 0);
+    const timer = setInterval(() => {
+      if (!document.hidden) charger();
+    }, INTERVALLE_MS);
+    return () => {
+      clearTimeout(premier);
+      clearInterval(timer);
+    };
+  }, [charger]);
+
+  const totalPages = donnees ? Math.max(1, Math.ceil(donnees.total / donnees.limite)) : 1;
+
+  return { filtres, modifier, donnees, maintenant, erreur, chargement, totalPages };
+}
+
+
+========================================
+FICHIER : web/src/app/agent/incidents/[id]/page.tsx
+========================================
+"use client";
+
+import { useState, type CSSProperties } from "react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useAgent } from "../../AgentContext";
+import { IconChevron, IconPin, IconUser } from "../../icons";
+import StatutPastille from "../../StatutPastille";
+import {
+  LIBELLE_GRAVITE, LIBELLE_TYPE, tempsRelatif, type Gravite,
+} from "../../incidentUi";
+import { usePhotoImage } from "@/app/tableau-de-bord/usePhotoImage";
+import styles from "./detail.module.css";
+import { useIncident, type Action } from "./useIncident";
+
+const GRAVITES = Object.keys(LIBELLE_GRAVITE) as Gravite[];
+
+function Photo({ token, ids }: { token: string; ids: number[] }) {
+  const [choix, setChoix] = useState(0);
+  const id = ids[choix];
+  return (
+    <div className={styles.photoBloc}>
+      <PhotoImage key={id} token={token} id={id} />
+      {ids.length > 1 && (
+        <div className={styles.miniatures}>
+          {ids.map((_, n) => (
+            <button
+              key={n}
+              type="button"
+              className={`${styles.miniature} ${n === choix ? styles.miniatureActive : ""}`}
+              onClick={() => setChoix(n)}
+              aria-label={`Photo ${n + 1}`}
+            >
+              {n + 1}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PhotoImage({ token, id }: { token: string; id: number }) {
+  const { url, erreur, chargement } = usePhotoImage(token, id);
+  return (
+    <div className={styles.photo}>
+      {url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={url} alt="Photo transmise par le citoyen" />
+      ) : (
+        <p className={styles.photoMessage}>{chargement ? "Chargement de la photo…" : erreur}</p>
+      )}
+      {url && <span className={styles.photoLegende}>Photo transmise par le citoyen</span>}
+    </div>
+  );
+}
+
+export default function IncidentDetailPage() {
+  const session = useAgent();
+  const params = useParams<{ id: string }>();
+  const { incident, maintenant, introuvable, erreur, chargement, envoi, envoyer } =
+    useIncident(session?.token ?? "", Number(params.id));
+
+  const [graviteEdit, setGraviteEdit] = useState<string | null>(null);
+  const [commentaire, setCommentaire] = useState("");
+
+  if (!session) return null;
+
+  const retour = (
+    <Link href="/agent/incidents" className={styles.retour}>
+      <span className={styles.retourIcone}><IconChevron /></span>
+      Retour aux incidents
+    </Link>
+  );
+
+  if (introuvable) {
+    return (
+      <>
+        {retour}
+        <p className={styles.etat}>Incident introuvable.</p>
+      </>
+    );
+  }
+  if (chargement || !incident) {
+    return (
+      <>
+        {retour}
+        {erreur ? <p role="alert" className={styles.erreur}>{erreur}</p> : <p className={styles.etat}>Chargement…</p>}
+      </>
+    );
+  }
+
+  const i = incident;
+  const peutPrendre = ["NOUVEAU", "VALIDE", "A_VERIFIER"].includes(i.statut);
+  const peutResoudre = i.statut === "EN_COURS";
+  const termine = i.statut === "RESOLU" || i.statut === "REJETE";
+
+  const graviteAffichee = graviteEdit ?? i.gravite ?? "";
+  const graviteModifiee = graviteEdit !== null && graviteEdit !== "" && graviteEdit !== i.gravite;
+  const noteSaisie = commentaire.trim() !== "";
+  const modifications = graviteModifiee || noteSaisie;
+
+  async function agir(action: Action) {
+    const ok = await envoyer(action, {
+      ...(graviteModifiee ? { gravite: graviteEdit as string } : {}),
+      ...(noteSaisie ? { commentaire: commentaire.trim() } : {}),
+    });
+    if (ok) {
+      setGraviteEdit(null);
+      setCommentaire("");
+    }
+  }
+
+  function rejeter() {
+    if (window.confirm("Rejeter ce signalement (fausse alerte ou doublon) ?")) agir("REJETER");
+  }
+
+  const lieu = i.lieu ?? `${i.latitude.toFixed(5)}, ${i.longitude.toFixed(5)}`;
+  const osm = `https://www.openstreetmap.org/?mlat=${i.latitude}&mlon=${i.longitude}#map=17/${i.latitude}/${i.longitude}`;
+  const confiance = i.confianceIa === null ? null : Math.round(i.confianceIa * (i.confianceIa <= 1 ? 100 : 1));
+
+  return (
+    <>
+      {retour}
+
+      <div className={styles.entete}>
+        <div>
+          <p className={styles.reference}>SIGNALEMENT #{i.id}</p>
+          <h1 className={styles.titre}>{i.titre}</h1>
+          <p className={styles.meta}>
+            <IconPin />
+            <a href={osm} target="_blank" rel="noopener noreferrer" className={styles.lienLieu}>{lieu}</a>
+            <span>• {tempsRelatif(i.dateCreation, maintenant)}</span>
+            {i.priorite === "URGENTE" && <span className={styles.urgent}>Urgent</span>}
+          </p>
+        </div>
+        <StatutPastille statut={i.statut} />
+      </div>
+
+      {erreur && <p role="alert" className={styles.erreur}>{erreur}</p>}
+
+      <div className={styles.grille}>
+        <div className={styles.colonne}>
+          {i.photoIds.length > 0 ? (
+            <Photo token={session.token} ids={i.photoIds} />
+          ) : (
+            <div className={`${styles.photo} ${styles.photoVide}`}>
+              <p className={styles.photoMessage}>Aucune photo transmise</p>
+            </div>
+          )}
+
+          <section className={styles.carte}>
+            <h2 className={styles.carteTitre}>Description</h2>
+            <p className={styles.description}>{i.description?.trim() || "Aucune description fournie."}</p>
+            <div className={styles.citoyen}>
+              <span className={styles.avatar}>C</span>
+              <div>
+                <p className={styles.citoyenNom}>Citoyen #{i.citoyenId}</p>
+                <p className={styles.citoyenInfo}>
+                  <IconUser />
+                  {i.nombreTemoins > 1 ? `Confirmé par ${i.nombreTemoins} témoins` : "Signalé par 1 témoin"}
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div className={styles.colonne}>
+          <section className={styles.carte}>
+            <div className={styles.iaEntete}>
+              <div>
+                <h2 className={styles.carteTitre}>Analyse IA</h2>
+                <p className={styles.iaSous}>
+                  {confiance === null ? "Non disponible pour ce signalement" : `Confiance ${confiance}%`}
+                </p>
+              </div>
+            </div>
+            {confiance !== null && (
+              <>
+                <div className={styles.barre}>
+                  <span style={{ "--p": `${Math.min(100, Math.max(0, confiance))}%` } as CSSProperties} />
+                </div>
+                <dl className={styles.ia}>
+                  <div><dt>Type détecté</dt><dd>{LIBELLE_TYPE[i.type] ?? i.type}</dd></div>
+                  <div>
+                    <dt>Gravité estimée</dt>
+                    <dd>{i.gravite ? <span className={styles.puce}>{LIBELLE_GRAVITE[i.gravite]}</span> : "—"}</dd>
+                  </div>
+                </dl>
+                {i.analyseIa && <p className={styles.iaTexte}>{i.analyseIa}</p>}
+              </>
+            )}
+          </section>
+
+          <section className={styles.carte}>
+            <h2 className={styles.carteTitre}>Traitement</h2>
+
+            {termine && (
+              <p className={styles.bandeau}>
+                {i.statut === "RESOLU" ? "Incident résolu" : "Signalement rejeté"} : lecture seule.
+              </p>
+            )}
+            {i.agent && !termine && <p className={styles.agent}>Pris en charge par {i.agent}</p>}
+
+            <label className={styles.champ} htmlFor="gravite">Gravité</label>
+            <select
+              id="gravite"
+              className={styles.select}
+              value={graviteAffichee}
+              disabled={termine || envoi}
+              onChange={(e) => setGraviteEdit(e.target.value)}
+            >
+              {i.gravite === null && <option value="">Non évaluée</option>}
+              {GRAVITES.map((g) => <option key={g} value={g}>{LIBELLE_GRAVITE[g]}</option>)}
+            </select>
+
+            <label className={styles.champ} htmlFor="commentaire">Commentaire</label>
+            <textarea
+              id="commentaire"
+              className={styles.textarea}
+              value={commentaire}
+              maxLength={1000}
+              disabled={termine || envoi}
+              onChange={(e) => setCommentaire(e.target.value)}
+              placeholder="Ajouter une note pour le citoyen…"
+            />
+
+            <button type="button" className={styles.principal} disabled={!peutPrendre || envoi} onClick={() => agir("PRENDRE_EN_CHARGE")}>
+              {envoi ? "Enregistrement…" : "✓ Prendre en charge"}
+            </button>
+            <button type="button" className={styles.secondaire} disabled={!peutResoudre || envoi} onClick={() => agir("RESOUDRE")}>
+              Marquer comme résolu
+            </button>
+            {peutPrendre && (
+              <button type="button" className={styles.danger} disabled={envoi} onClick={rejeter}>
+                Rejeter le signalement
+              </button>
+            )}
+            {!termine && !peutPrendre && modifications && (
+              <button type="button" className={styles.lien} disabled={envoi} onClick={() => agir("ENREGISTRER")}>
+                Enregistrer sans changer le statut
+              </button>
+            )}
+
+            {i.commentaires.length > 0 && (
+              <ul className={styles.notes}>
+                {i.commentaires.map((c) => (
+                  <li key={c.id}>
+                    <p>{c.texte}</p>
+                    <span>{c.auteur} • {tempsRelatif(c.dateCreation, maintenant)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+      </div>
+    </>
+  );
+}
+
+
+========================================
+FICHIER : web/src/app/agent/incidents/[id]/detail.module.css
+========================================
+.retour { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #0b6469; text-decoration: none; }
+.retourIcone { display: flex; transform: rotate(180deg); }
+.etat { margin: 32px 0; font-size: 15px; color: #4b5f63; }
+.erreur { margin: 16px 0 0; padding: 12px 16px; border-radius: 10px; background: #fde8e8; font-size: 14px; color: #b42323; }
+
+.entete { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-top: 16px; }
+.reference { margin: 0; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #0b6469; }
+.titre { margin: 6px 0 0; font-size: 32px; font-weight: 400; color: #14262a; }
+.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0 0; font-size: 14px; color: #4b5f63; }
+.lienLieu { color: inherit; text-decoration: none; }
+.lienLieu:hover { text-decoration: underline; }
+.urgent { margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: #d64545; font-size: 11px; font-weight: 700; color: #fff; }
+
+.grille { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr); gap: 24px; margin-top: 24px; align-items: start; }
+.colonne { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+
+.photoBloc { display: flex; flex-direction: column; gap: 10px; }
+.photo { position: relative; display: flex; align-items: center; justify-content: center; height: 320px; overflow: hidden; border-radius: 16px; background: #5c6769; }
+.photo img { width: 100%; height: 100%; object-fit: contain; background: #1f2b2d; }
+.photoVide { background: #e3ebea; }
+.photoMessage { margin: 0; font-size: 14px; color: #dfe8e8; }
+.photoVide .photoMessage { color: #4b5f63; }
+.photoLegende { position: absolute; left: 14px; bottom: 14px; padding: 6px 10px; border-radius: 8px; background: rgba(20, 38, 42, 0.85); font-size: 11px; font-weight: 600; color: #fff; }
+.miniatures { display: flex; gap: 8px; }
+.miniature { width: 36px; height: 36px; border: 1px solid #e3e8e8; border-radius: 8px; background: #fff; font: inherit; font-size: 13px; cursor: pointer; }
+.miniatureActive { border-color: #0b6469; background: #dff0ee; font-weight: 700; }
+
+.carte { padding: 20px; border: 1px solid #e3e8e8; border-radius: 16px; background: #fff; box-shadow: 0 1px 2px rgba(20, 38, 42, 0.04); }
+.carteTitre { margin: 0; font-size: 18px; font-weight: 400; color: #14262a; }
+.description { margin: 12px 0 0; padding-bottom: 16px; border-bottom: 1px solid #e3e8e8; font-size: 14px; line-height: 1.5; color: #355055; white-space: pre-wrap; }
+.citoyen { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+.avatar { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: #c9e6e3; font-size: 13px; font-weight: 700; color: #14414a; }
+.citoyenNom { margin: 0; font-size: 13px; font-weight: 600; color: #14262a; }
+.citoyenInfo { display: flex; align-items: center; gap: 6px; margin: 4px 0 0; font-size: 12px; color: #6b7d80; }
+
+.iaSous { margin: 4px 0 0; font-size: 12px; color: #6b7d80; }
+.barre { height: 6px; margin-top: 16px; overflow: hidden; border-radius: 999px; background: #e3e8e8; }
+.barre span { display: block; width: var(--p); height: 100%; background: #0b6469; }
+.ia { margin: 16px 0 0; }
+.ia div { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eef1f1; font-size: 12px; }
+.ia dt { color: #6b7d80; }
+.ia dd { margin: 0; font-weight: 600; color: #14262a; }
+.puce { padding: 3px 10px; border-radius: 999px; background: #eef1f1; font-size: 11px; font-weight: 600; }
+.iaTexte { margin: 14px 0 0; padding: 12px; border-radius: 10px; background: #f3f6f5; font-size: 12px; line-height: 1.5; color: #4b5f63; }
+
+.bandeau { margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; background: #f3f6f5; font-size: 13px; font-weight: 600; color: #4b5f63; }
+.agent { margin: 12px 0 0; font-size: 12px; color: #6b7d80; }
+.champ { display: block; margin: 16px 0 6px; font-size: 12px; font-weight: 600; color: #14262a; }
+.select, .textarea { width: 100%; padding: 12px; border: 1px solid #e3e8e8; border-radius: 10px; background: #fff; font: inherit; font-size: 14px; color: #14262a; }
+.textarea { min-height: 84px; resize: vertical; }
+.select:disabled, .textarea:disabled { background: #f3f6f5; cursor: not-allowed; }
+
+.principal, .secondaire, .danger, .lien { display: block; width: 100%; margin-top: 12px; padding: 13px; border: none; border-radius: 10px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.principal { background: #0b6469; color: #fff; }
+.principal:hover:not(:disabled) { background: #095257; }
+.secondaire { background: #e8f1f0; color: #0b6469; }
+.secondaire:hover:not(:disabled) { background: #dbe9e8; }
+.danger { background: none; color: #b42323; }
+.danger:hover:not(:disabled) { background: #fde8e8; }
+.lien { background: none; color: #0b6469; text-decoration: underline; }
+.principal:disabled, .secondaire:disabled, .danger:disabled, .lien:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.notes { margin: 20px 0 0; padding: 0; list-style: none; border-top: 1px solid #e3e8e8; }
+.notes li { padding: 12px 0; border-bottom: 1px solid #eef1f1; }
+.notes p { margin: 0; font-size: 13px; color: #14262a; white-space: pre-wrap; }
+.notes span { display: block; margin-top: 4px; font-size: 11px; color: #8a9a9d; }
+
+@media (max-width: 1000px) { .grille { grid-template-columns: 1fr; } .photo { height: 240px; } }
+
+
+========================================
+FICHIER : web/src/app/agent/incidents/[id]/useIncident.ts
+========================================
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { clearSession } from "@/lib/session";
+import type { Gravite, Statut } from "../../incidentUi";
+
+export type Commentaire = { id: number; texte: string; dateCreation: string; auteur: string };
+
+export type IncidentDetail = {
+  id: number;
+  titre: string;
+  type: string;
+  description: string | null;
+  lieu: string | null;
+  latitude: number;
+  longitude: number;
+  statut: Statut;
+  gravite: Gravite | null;
+  priorite: "NORMALE" | "URGENTE";
+  confianceIa: number | null;
+  analyseIa: string | null;
+  nombreTemoins: number;
+  citoyenId: number;
+  agent: string | null;
+  dateCreation: string;
+  datePriseEnCharge: string | null;
+  dateResolution: string | null;
+  photoIds: number[];
+  commentaires: Commentaire[];
+};
+
+export type Action = "PRENDRE_EN_CHARGE" | "RESOUDRE" | "REJETER" | "ENREGISTRER";
+
+const INTERVALLE_MS = 15000;
+
+export function useIncident(token: string, id: number) {
+  const router = useRouter();
+  const [incident, setIncident] = useState<IncidentDetail | null>(null);
+  const [maintenant, setMaintenant] = useState(0);
+  const [introuvable, setIntrouvable] = useState(false);
+  const [erreur, setErreur] = useState("");
+  const [chargement, setChargement] = useState(true);
+  const [envoi, setEnvoi] = useState(false);
+  const occupe = useRef(false);
+
+  const expirer = useCallback(() => {
+    clearSession();
+    router.replace("/connexion");
+  }, [router]);
+
+  const charger = useCallback(async () => {
+    if (!token || !Number.isInteger(id) || id <= 0) {
+      setIntrouvable(true);
+      setChargement(false);
+      return;
+    }
+    try {
+      const res = await fetch(`/api/agent/incidents/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
+      if (occupe.current) return; // une action est en cours : sa réponse fera foi
+      if (res.status === 401) return expirer();
+      if (res.status === 404) {
+        setIntrouvable(true);
+        return;
+      }
+      if (!res.ok) {
+        setErreur("Impossible de charger l’incident.");
+        return;
+      }
+      setIncident(await res.json());
+      setMaintenant(Date.now());
+      setErreur("");
+    } catch {
+      setErreur("Serveur injoignable. Nouvelle tentative automatique.");
+    } finally {
+      setChargement(false);
+    }
+  }, [token, id, expirer]);
+
+  useEffect(() => {
+    const premier = setTimeout(charger, 0);
+    const timer = setInterval(() => {
+      if (!document.hidden) charger();
+    }, INTERVALLE_MS);
+    return () => {
+      clearTimeout(premier);
+      clearInterval(timer);
+    };
+  }, [charger]);
+
+  // Renvoie true si l'action a réussi
+  const envoyer = useCallback(
+    async (action: Action, extra: { gravite?: string; commentaire?: string }) => {
+      occupe.current = true;
+      setEnvoi(true);
+      setErreur("");
+      try {
+        const res = await fetch(`/api/agent/incidents/${id}`, {
+          method: "PATCH",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ action, ...extra }),
+        });
+        if (res.status === 401) {
+          expirer();
+          return false;
+        }
+        if (res.status === 409) {
+          occupe.current = false;
+          await charger();
+          setErreur("Cet incident vient d’être modifié par un autre agent. Les données ont été actualisées.");
+          return false;
+        }
+        if (!res.ok) {
+          const d = await res.json().catch(() => null);
+          setErreur(d?.error?.message ?? "Action impossible.");
+          return false;
+        }
+        setIncident(await res.json());
+        setMaintenant(Date.now());
+        return true;
+      } catch {
+        setErreur("Serveur injoignable.");
+        return false;
+      } finally {
+        occupe.current = false;
+        setEnvoi(false);
+      }
+    },
+    [token, id, charger, expirer]
+  );
+
+  return { incident, maintenant, introuvable, erreur, chargement, envoi, envoyer };
+}
+
+
+========================================
+FICHIER : web/src/app/api/agent/incidents/route.ts
+========================================
+import { NextResponse } from "next/server";
+import type { RowDataPacket } from "mysql2";
+import { z } from "zod";
+import { pool } from "@/lib/db";
+import { requireAuth } from "@/lib/guard";
+import { GRAVITES, ISO, STATUTS, TYPES } from "@/lib/incidents";
+
+const Requete = z.object({
+  statut: z.enum(STATUTS).optional(),
+  gravite: z.enum(GRAVITES).optional(),
+  type: z.enum(TYPES).optional(),
+  q: z.string().trim().max(100).optional(),
+  page: z.coerce.number().int().min(1).max(100000).default(1),
+  limite: z.coerce.number().int().min(1).max(50).default(20),
+});
+
+function erreur(status: number, code: string, message: string) {
+  return NextResponse.json({ error: { code, message } }, { status });
+}
+
+// Liste des incidents (filtres, recherche, pagination) + compteurs par statut
+export async function GET(req: Request) {
+  const auth = await requireAuth(req, ["AGENT", "ADMINISTRATEUR"]);
+  if ("response" in auth) return auth.response;
+
+  const brut: Record<string, string> = {};
+  for (const [k, v] of new URL(req.url).searchParams) if (v !== "") brut[k] = v;
+  const analyse = Requete.safeParse(brut);
+  if (!analyse.success) return erreur(400, "VALIDATION_ERROR", "Paramètres invalides");
+  const { statut, gravite, type, q, page, limite } = analyse.data;
+
+  const where: string[] = [];
+  const params: (string | number)[] = [];
+  if (statut) { where.push("statut = ?"); params.push(statut); }
+  if (gravite) { where.push("gravite = ?"); params.push(gravite); }
+  if (type) { where.push("type = ?"); params.push(type); }
+  if (q) {
+    const motif = `%${q.replace(/[\\%_]/g, "\\$&")}%`;
+    const num = /^#?(\d{1,9})$/.exec(q);
+    if (num) {
+      where.push("(id = ? OR titre LIKE ? OR lieu LIKE ?)");
+      params.push(Number(num[1]), motif, motif);
+    } else {
+      where.push("(titre LIKE ? OR lieu LIKE ?)");
+      params.push(motif, motif);
+    }
+  }
+  const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+
+  try {
+    const [total, lignes, groupes] = await Promise.all([
+      pool.query<RowDataPacket[]>(`SELECT COUNT(*) AS n FROM incident ${clause}`, params),
+      pool.query<RowDataPacket[]>(
+        `SELECT id, titre, type, lieu, statut, gravite, priorite,
+                DATE_FORMAT(date_creation, '${ISO}') AS dateCreation
+           FROM incident ${clause}
+          ORDER BY date_creation DESC, id DESC
+          LIMIT ? OFFSET ?`,
+        [...params, limite, (page - 1) * limite]
+      ),
+      pool.query<RowDataPacket[]>("SELECT statut, COUNT(*) AS n FROM incident GROUP BY statut"),
+    ]);
+
+    const compteurs: Record<string, number> = { TOUS: 0 };
+    for (const s of STATUTS) compteurs[s] = 0;
+    for (const g of groupes[0]) {
+      compteurs[String(g.statut)] = Number(g.n);
+      compteurs.TOUS += Number(g.n);
+    }
+
+    return NextResponse.json({
+      incidents: lignes[0],
+      total: Number(total[0][0]?.n ?? 0),
+      page,
+      limite,
+      compteurs,
+    });
+  } catch (e) {
+    console.error("Échec du chargement des incidents :", e);
+    return erreur(500, "SERVER_ERROR", "Erreur interne");
+  }
+}
+
+
+========================================
+FICHIER : web/src/app/api/agent/incidents/[id]/route.ts
+========================================
+import { NextResponse } from "next/server";
+import type { RowDataPacket } from "mysql2";
+import { z } from "zod";
+import { pool } from "@/lib/db";
+import { requireAuth } from "@/lib/guard";
+import { journaliser } from "@/lib/journal";
+import { GRAVITES, chargerIncident, lireId } from "@/lib/incidents";
+
+function erreur(status: number, code: string, message: string) {
+  return NextResponse.json({ error: { code, message } }, { status });
+}
+
+type Ctx = { params: Promise<{ id: string }> };
+
+export async function GET(req: Request, ctx: Ctx) {
+  const auth = await requireAuth(req, ["AGENT", "ADMINISTRATEUR"]);
+  if ("response" in auth) return auth.response;
+
+  const id = lireId((await ctx.params).id);
+  if (!id) return erreur(404, "NOT_FOUND", "Incident introuvable");
+
+  try {
+    const incident = await chargerIncident(id);
+    if (!incident) return erreur(404, "NOT_FOUND", "Incident introuvable");
+    return NextResponse.json(incident);
+  } catch (e) {
+    console.error("Échec du chargement de l'incident :", e);
+    return erreur(500, "SERVER_ERROR", "Erreur interne");
+  }
+}
+
+const Corps = z.object({
+  action: z.enum(["PRENDRE_EN_CHARGE", "RESOUDRE", "REJETER", "ENREGISTRER"]),
+  gravite: z.enum(GRAVITES).optional(),
+  commentaire: z.string().trim().max(1000).optional(),
+});
+
+// Transitions autorisées : statut actuel -> nouveau statut
+const TRANSITIONS = {
+  PRENDRE_EN_CHARGE: { de: ["NOUVEAU", "VALIDE", "A_VERIFIER"], vers: "EN_COURS" },
+  RESOUDRE: { de: ["EN_COURS"], vers: "RESOLU" },
+  REJETER: { de: ["NOUVEAU", "VALIDE", "A_VERIFIER"], vers: "REJETE" },
+} as const;
+
+export async function PATCH(req: Request, ctx: Ctx) {
+  const auth = await requireAuth(req, ["AGENT", "ADMINISTRATEUR"]);
+  if ("response" in auth) return auth.response;
+
+  const id = lireId((await ctx.params).id);
+  if (!id) return erreur(404, "NOT_FOUND", "Incident introuvable");
+
+  let json: unknown;
+  try {
+    json = await req.json();
+  } catch {
+    return erreur(400, "VALIDATION_ERROR", "Corps JSON invalide");
+  }
+  const analyse = Corps.safeParse(json);
+  if (!analyse.success) return erreur(400, "VALIDATION_ERROR", "Données invalides");
+  const corps = analyse.data;
+  const transition = corps.action === "ENREGISTRER" ? null : TRANSITIONS[corps.action];
+
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    // Verrou de ligne : si deux agents agissent en même temps, le second attend puis reçoit 409
+    const [rows] = await conn.execute<RowDataPacket[]>(
+      "SELECT statut, gravite FROM incident WHERE id = ? FOR UPDATE",
+      [id]
+    );
+    const ancien = rows[0];
+    if (!ancien) {
+      await conn.rollback();
+      return erreur(404, "NOT_FOUND", "Incident introuvable");
+    }
+    const statutActuel = String(ancien.statut);
+    const termine = statutActuel === "RESOLU" || statutActuel === "REJETE";
+    const autorise = transition
+      ? (transition.de as readonly string[]).includes(statutActuel)
+      : !termine;
+    if (!autorise) {
+      await conn.rollback();
+      return erreur(409, "CONFLICT", "Cet incident a déjà été traité ou modifié");
+    }
+
+    const sets: string[] = [];
+    const vals: (string | number)[] = [];
+    if (transition) {
+      sets.push("statut = ?");
+      vals.push(transition.vers);
+      if (corps.action === "PRENDRE_EN_CHARGE") {
+        sets.push("agent_id = ?", "date_prise_en_charge = NOW()");
+        vals.push(auth.user.id);
+      } else if (corps.action === "RESOUDRE") {
+        sets.push("agent_id = COALESCE(agent_id, ?)", "date_resolution = NOW()");
+        vals.push(auth.user.id);
+      }
+    }
+    const nouvelleGravite = corps.gravite && corps.gravite !== ancien.gravite ? corps.gravite : null;
+    if (nouvelleGravite) {
+      sets.push("gravite = ?");
+      vals.push(nouvelleGravite);
+    }
+    const commentaire = corps.commentaire ?? "";
+
+    if (sets.length === 0 && !commentaire) {
+      await conn.rollback();
+      return erreur(400, "VALIDATION_ERROR", "Rien à enregistrer");
+    }
+
+    if (sets.length > 0) {
+      await conn.execute(`UPDATE incident SET ${sets.join(", ")} WHERE id = ?`, [...vals, id]);
+    }
+    if (transition) {
+      await journaliser(
+        {
+          auteurId: auth.user.id,
+          action: "CHANGEMENT_STATUT",
+          typeEntite: "INCIDENT",
+          idEntite: id,
+          ancienneValeur: statutActuel,
+          nouvelleValeur: transition.vers,
+        },
+        conn
+      );
+    }
+    if (nouvelleGravite) {
+      await journaliser(
+        {
+          auteurId: auth.user.id,
+          action: "CHANGEMENT_GRAVITE",
+          typeEntite: "INCIDENT",
+          idEntite: id,
+          ancienneValeur: (ancien.gravite as string | null) ?? null,
+          nouvelleValeur: nouvelleGravite,
+        },
+        conn
+      );
+    }
+    if (commentaire) {
+      await conn.execute(
+        "INSERT INTO incident_commentaire (incident_id, auteur_id, texte) VALUES (?, ?, ?)",
+        [id, auth.user.id, commentaire]
+      );
+    }
+
+    await conn.commit();
+  } catch (e) {
+    await conn.rollback().catch(() => {});
+    console.error("Échec de la mise à jour de l'incident :", e);
+    return erreur(500, "SERVER_ERROR", "Erreur interne");
+  } finally {
+    conn.release();
+  }
+
+  const incident = await chargerIncident(id);
+  return NextResponse.json(incident);
+}
+
+
+========================================
+FICHIER : web/src/app/api/agent/photos/route.ts
+========================================
+import { NextResponse } from "next/server";
+import type { RowDataPacket } from "mysql2";
+import { pool } from "@/lib/db";
+import { requireAuth } from "@/lib/guard";
+
+// Liste des photos reçues : réservée aux agents et aux administrateurs
+export async function GET(req: Request) {
+  const auth = await requireAuth(req, ["AGENT", "ADMINISTRATEUR"]);
+  if ("response" in auth) return auth.response;
+
+  // MySQL stocke les dates en UTC (conteneur Docker) : on les renvoie avec "Z"
+  // pour que le navigateur les convertisse lui-même à l'heure locale.
+  const [rows] = await pool.query<RowDataPacket[]>(
+    `SELECT p.id,
+            u.prenom,
+            u.nom,
+            DATE_FORMAT(p.date_creation, '%Y-%m-%dT%H:%i:%sZ') AS dateReception
+       FROM photo p
+       JOIN utilisateur u ON u.id = p.utilisateur_id
+      ORDER BY p.date_creation DESC, p.id DESC
+      LIMIT 100`
+  );
+  return NextResponse.json(rows);
+}
+
+
+========================================
+FICHIER : web/src/app/api/photos/[id]/route.ts
+========================================
+import { NextResponse } from "next/server";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import type { RowDataPacket } from "mysql2";
+import { pool } from "@/lib/db";
+import { requireAuth } from "@/lib/guard";
+import { UPLOAD_DIR } from "@/lib/photos";
+
+function introuvable() {
+  return NextResponse.json(
+    { error: { code: "NOT_FOUND", message: "Photo introuvable" } },
+    { status: 404 }
+  );
+}
+
+// Lecture d'une photo : son auteur, ou un agent / administrateur
+export async function GET(
+  req: Request,
+  ctx: { params: Promise<{ id: string }> }
+) {
+  const auth = await requireAuth(req);
+  if ("response" in auth) return auth.response;
+
+  const { id } = await ctx.params;
+  const photoId = Number(id);
+  if (!Number.isInteger(photoId) || photoId <= 0) return introuvable();
+
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    "SELECT utilisateur_id, nom_fichier, type_mime FROM photo WHERE id = ?",
+    [photoId]
+  );
+  const photo = rows[0];
+  if (!photo) return introuvable();
+
+  // Un citoyen ne voit que ses propres photos (404 plutôt que 403 : on ne révèle pas leur existence)
+  if (auth.user.role === "CITOYEN" && photo.utilisateur_id !== auth.user.id) {
+    return introuvable();
+  }
+
+  // path.basename : protection contre toute tentative de sortir du dossier
+  const contenu = await readFile(
+    path.join(UPLOAD_DIR, path.basename(photo.nom_fichier))
+  ).catch(() => null);
+  if (!contenu) return introuvable();
+
+  return new Response(new Uint8Array(contenu), {
+    headers: {
+      "Content-Type": photo.type_mime,
+      "Content-Length": String(contenu.length),
+      "X-Content-Type-Options": "nosniff",
+      "Cache-Control": "private, max-age=3600",
+    },
+  });
+}
+
+
+========================================
+FICHIER : web/src/lib/incidents.ts
+========================================
+import type { RowDataPacket } from "mysql2";
+import { pool } from "@/lib/db";
+
+// Dates MySQL en UTC : on renvoie un "Z" pour que le navigateur les convertisse en heure locale
+export const ISO = "%Y-%m-%dT%H:%i:%sZ";
+
+export const STATUTS = ["NOUVEAU", "VALIDE", "EN_COURS", "RESOLU", "REJETE", "A_VERIFIER"] as const;
+export const GRAVITES = ["FAIBLE", "MOYENNE", "ELEVEE", "CRITIQUE"] as const;
+export const TYPES = [
+  "ACCIDENT", "INCENDIE", "INONDATION", "FUITE_EAU",
+  "ARBRE_TOMBE", "NID_DE_POULE", "INFRASTRUCTURE", "AUTRE",
+] as const;
+
+export function lireId(brut: string): number | null {
+  const n = Number(brut);
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
+// Un incident complet pour la page de détail.
+// Le citoyen n'est identifié que par son numéro : ni nom, ni e-mail, ni téléphone.
+export async function chargerIncident(id: number) {
+  const [inc] = await pool.query<RowDataPacket[]>(
+    `SELECT i.id, i.titre, i.type, i.description, i.lieu, i.latitude, i.longitude,
+            i.statut, i.gravite, i.priorite, i.confiance_ia, i.analyse_ia,
+            i.nombre_temoins, i.citoyen_id, i.agent_id,
+            a.prenom AS agent_prenom, a.nom AS agent_nom,
+            DATE_FORMAT(i.date_creation, '${ISO}') AS date_creation,
+            DATE_FORMAT(i.date_prise_en_charge, '${ISO}') AS date_prise_en_charge,
+            DATE_FORMAT(i.date_resolution, '${ISO}') AS date_resolution
+       FROM incident i
+       LEFT JOIN utilisateur a ON a.id = i.agent_id
+      WHERE i.id = ?`,
+    [id]
+  );
+  const i = inc[0];
+  if (!i) return null;
+
+  const [photos] = await pool.query<RowDataPacket[]>(
+    "SELECT id FROM photo WHERE incident_id = ? ORDER BY id",
+    [id]
+  );
+  const [notes] = await pool.query<RowDataPacket[]>(
+    `SELECT c.id, c.texte, DATE_FORMAT(c.date_creation, '${ISO}') AS date_creation,
+            u.prenom, u.nom
+       FROM incident_commentaire c
+       JOIN utilisateur u ON u.id = c.auteur_id
+      WHERE c.incident_id = ?
+      ORDER BY c.date_creation DESC, c.id DESC`,
+    [id]
+  );
+
+  return {
+    id: Number(i.id),
+    titre: String(i.titre),
+    type: String(i.type),
+    description: (i.description as string | null) ?? null,
+    lieu: (i.lieu as string | null) ?? null,
+    latitude: Number(i.latitude),
+    longitude: Number(i.longitude),
+    statut: String(i.statut),
+    gravite: (i.gravite as string | null) ?? null,
+    priorite: String(i.priorite),
+    confianceIa: i.confiance_ia == null ? null : Number(i.confiance_ia),
+    analyseIa: (i.analyse_ia as string | null) ?? null,
+    nombreTemoins: Number(i.nombre_temoins),
+    citoyenId: Number(i.citoyen_id),
+    agent: i.agent_id ? `${i.agent_prenom} ${i.agent_nom}` : null,
+    dateCreation: String(i.date_creation),
+    datePriseEnCharge: (i.date_prise_en_charge as string | null) ?? null,
+    dateResolution: (i.date_resolution as string | null) ?? null,
+    photoIds: photos.map((p) => Number(p.id)),
+    commentaires: notes.map((c) => ({
+      id: Number(c.id),
+      texte: String(c.texte),
+      dateCreation: String(c.date_creation),
+      auteur: `${c.prenom} ${c.nom}`,
+    })),
+  };
+}
+
+
+========================================
+FICHIER : web/src/lib/photos.ts
+========================================
+import path from "node:path";
+
+export const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5 Mo
+export const MAX_PHOTOS_PAR_HEURE = 10;
+
+// Dossier de stockage (hors de /public : une photo n'est jamais accessible sans authentification)
+export const UPLOAD_DIR = path.resolve(
+  process.env.UPLOAD_DIR ?? path.join(process.cwd(), "uploads", "photos")
+);
+
+export type TypeImage = { mime: string; ext: string };
+
+// On identifie le vrai format d'après les premiers octets du fichier,
+// jamais d'après le nom ou le type envoyé par le client (falsifiable).
+export function detecterTypeImage(b: Uint8Array): TypeImage | null {
+  if (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) {
+    return { mime: "image/jpeg", ext: "jpg" };
+  }
+  const png = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+  if (b.length >= 8 && png.every((v, i) => b[i] === v)) {
+    return { mime: "image/png", ext: "png" };
+  }
+  // WebP : "RIFF" .... "WEBP"
+  if (
+    b.length >= 12 &&
+    b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 &&
+    b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50
+  ) {
+    return { mime: "image/webp", ext: "webp" };
+  }
+  return null;
+}
+
+
+========================================
+FICHIER : web/src/lib/guard.ts
+========================================
+import { NextResponse } from "next/server";
+import type { RowDataPacket } from "mysql2";
+import { pool } from "@/lib/db";
+import { verifyToken, type Role } from "@/lib/auth";
+
+export type AuthUser = { id: number; role: Role };
+
+function erreur(status: number, code: string, message: string) {
+  return NextResponse.json({ error: { code, message } }, { status });
+}
+
+export async function requireAuth(
+  req: Request,
+  roles?: Role[]
+): Promise<{ user: AuthUser } | { response: NextResponse }> {
+  const [scheme, token] = (req.headers.get("authorization") ?? "").split(" ");
+  if (scheme !== "Bearer" || !token) {
+    return { response: erreur(401, "UNAUTHENTICATED", "Authentification requise") };
+  }
+
+  let id: number;
+  try {
+    ({ id } = await verifyToken(token));
+  } catch {
+    return { response: erreur(401, "INVALID_TOKEN", "Token invalide ou expiré") };
+  }
+
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    "SELECT id, role, actif FROM utilisateur WHERE id = ?",
+    [id]
+  );
+  const u = rows[0];
+  if (!u) return { response: erreur(401, "INVALID_TOKEN", "Token invalide ou expiré") };
+  if (!u.actif) return { response: erreur(403, "ACCOUNT_SUSPENDED", "Compte suspendu") };
+  if (roles && !roles.includes(u.role as Role)) {
+    return { response: erreur(403, "FORBIDDEN", "Accès refusé pour ce rôle") };
+  }
+
+  return { user: { id: u.id, role: u.role as Role } };
+}
+
+
+========================================
+FICHIER : web/src/lib/db.ts
+========================================
+import mysql from "mysql2/promise";
+
+const globalForDb = globalThis as unknown as { pool?: mysql.Pool };
+
+export const pool = globalForDb.pool ?? mysql.createPool(process.env.DATABASE_URL!);
+
+if (process.env.NODE_ENV !== "production") globalForDb.pool = pool;
+
+
+========================================
+FICHIER : web/src/app/tableau-de-bord/page.tsx
+========================================
+"use client";
+
+import Link from "next/link";
+import styles from "./tableau.module.css";
+import { useTableauDeBord } from "./useTableauDeBord";
+import PhotosRecues from "./PhotosRecues";
+export default function TableauDeBordPage() {
+  const { session, deconnexion } = useTableauDeBord();
+
+  if (!session) return null;
+
+  return (
+    <main className={styles.page}>
+      <h1 className={styles.title}>Bonjour {session.utilisateur.prenom}</h1>
+      <p className={styles.role}>Rôle : {session.utilisateur.role}</p>
+      {session.utilisateur.role === "ADMINISTRATEUR" && (
+        <Link href="/inscription" className={`${styles.button} ${styles.lien}`}>
+          Ajouter un agent
+        </Link>
+      )}
+      {(session.utilisateur.role === "AGENT" || session.utilisateur.role === "ADMINISTRATEUR") && (
+  <PhotosRecues token={session.token} />
+)}
+      <button onClick={deconnexion} className={styles.button}>Se déconnecter</button>
+    </main>
+  );
+}
+
+
+========================================
+FICHIER : web/src/app/tableau-de-bord/PhotosRecues.tsx
+========================================
+"use client";
+
+import { useState } from "react";
+import styles from "./photos.module.css";
+import { usePhotosRecues, type PhotoRecue } from "./usePhotosRecues";
+import PhotoModal from "./PhotoModal";
+
+function formaterDate(iso: string) {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime())
+    ? ""
+    : d.toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" });
+}
+
+export default function PhotosRecues({ token }: { token: string }) {
+  const { photos, erreur, chargement } = usePhotosRecues(token);
+  const [selection, setSelection] = useState<PhotoRecue | null>(null);
+
+  return (
+    <section className={styles.section}>
+      <h2 className={styles.titre}>Photos reçues</h2>
+      {erreur && <p role="alert" className={styles.erreur}>{erreur}</p>}
+
+      {chargement ? (
+        <p className={styles.vide}>Chargement…</p>
+      ) : photos.length === 0 ? (
+        <p className={styles.vide}>Aucune photo reçue pour le moment.</p>
+      ) : (
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>Citoyen</th>
+              <th>Reçue le</th>
+            </tr>
+          </thead>
+          <tbody>
+            {photos.map((p) => (
+              <tr key={p.id} onClick={() => setSelection(p)}>
+                <td>
+                  <button className={styles.ligne}>{p.prenom} {p.nom}</button>
+                </td>
+                <td>{formaterDate(p.dateReception)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {selection && (
+        <PhotoModal
+          key={selection.id}
+          token={token}
+          photo={selection}
+          onClose={() => setSelection(null)}
+        />
+      )}
+    </section>
+  );
+}
+
+
+========================================
+FICHIER : web/src/app/tableau-de-bord/PhotoModal.tsx
+========================================
+"use client";
+
+import { useEffect, useRef } from "react";
+import styles from "./photos.module.css";
+import { usePhotoImage } from "./usePhotoImage";
+import type { PhotoRecue } from "./usePhotosRecues";
+
+type Props = { token: string; photo: PhotoRecue; onClose: () => void };
+
+export default function PhotoModal({ token, photo, onClose }: Props) {
+  const { url, erreur, chargement } = usePhotoImage(token, photo.id);
+  const boutonFermer = useRef<HTMLButtonElement>(null);
+  const nom = `${photo.prenom} ${photo.nom}`;
+
+  useEffect(() => {
+    boutonFermer.current?.focus();
+    const surTouche = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", surTouche);
+    return () => window.removeEventListener("keydown", surTouche);
+  }, [onClose]);
+
+  return (
+    <div
+      className={styles.fond}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className={styles.fenetre} role="dialog" aria-modal="true" aria-label={`Photo de ${nom}`}>
+        <div className={styles.entete}>
+          <h3>Photo de {nom}</h3>
+          <button ref={boutonFermer} onClick={onClose} className={styles.fermer}>
+            Fermer
+          </button>
+        </div>
+        <div className={styles.corps}>
+          {chargement && <p className={styles.vide}>Chargement…</p>}
+          {erreur && <p role="alert" className={styles.erreur}>{erreur}</p>}
+          {url && <img src={url} alt={`Photo envoyée par ${nom}`} className={styles.image} />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+========================================
+FICHIER : web/src/app/tableau-de-bord/photos.module.css
+========================================
+.section { margin-top: 32px; }
+.titre { margin: 0 0 12px; font-size: 18px; color: #14262a; }
+.vide { color: #4b5f63; font-size: 14px; }
+.erreur { margin: 0 0 12px; color: #dc2626; font-size: 14px; }
+.table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.table th { text-align: left; padding: 10px 12px; background: #f4f6f6; color: #4b5f63; font-weight: 600; }
+.table td { padding: 12px; border-bottom: 1px solid #e3e8e8; color: #14262a; }
+.table tbody tr { cursor: pointer; }
+.table tbody tr:hover { background: #f4f6f6; }
+.ligne { background: none; border: none; padding: 0; font: inherit; font-weight: 600; color: #0b6469; cursor: pointer; text-align: left; }
+.ligne:focus-visible { outline: 2px solid #0b6469; outline-offset: 2px; }
+
+.fond { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(0, 0, 0, 0.6); }
+.fenetre { display: flex; flex-direction: column; width: 100%; max-width: 900px; max-height: 90vh; overflow: hidden; background: #fff; border-radius: 16px; }
+.entete { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; border-bottom: 1px solid #e3e8e8; }
+.entete h3 { margin: 0; font-size: 16px; color: #14262a; }
+.fermer { padding: 8px 14px; border: none; border-radius: 10px; background: #0b6469; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+.corps { display: flex; align-items: center; justify-content: center; min-height: 200px; padding: 16px; overflow: auto; }
+.image { max-width: 100%; max-height: 70vh; object-fit: contain; border-radius: 8px; }
+
+
+========================================
+FICHIER : web/src/app/tableau-de-bord/usePhotosRecues.ts
+========================================
+import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { clearSession } from "@/lib/session";
+
+export type PhotoRecue = {
+  id: number;
+  prenom: string;
+  nom: string;
+  dateReception: string;
+};
+
+const INTERVALLE_MS = 15000;
+
+export function usePhotosRecues(token: string) {
+  const router = useRouter();
+  const [photos, setPhotos] = useState<PhotoRecue[]>([]);
+  const [erreur, setErreur] = useState("");
+  const [chargement, setChargement] = useState(true);
+
+  const charger = useCallback(async () => {
+    try {
+      const res = await fetch("/api/agent/photos", {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
+      if (res.status === 401) {
+        clearSession();
+        router.replace("/connexion");
+        return;
+      }
+      if (res.status === 403) {
+        setErreur("Accès réservé aux agents.");
+        return;
+      }
+      if (!res.ok) {
+        setErreur("Impossible de charger les photos.");
+        return;
+      }
+      setPhotos(await res.json());
+      setErreur("");
+    } catch {
+      setErreur("Serveur injoignable. Nouvelle tentative automatique.");
+    } finally {
+      setChargement(false);
+    }
+  }, [token, router]);
+
+useEffect(() => {
+  // Premier chargement via un minuteur : la règle ESLint interdit d'appeler
+  // directement, dans l'effet, une fonction qui modifie un état
+  const premier = setTimeout(charger, 0);
+  const timer = setInterval(() => {
+    if (!document.hidden) charger();
+  }, INTERVALLE_MS);
+  return () => {
+    clearTimeout(premier);
+    clearInterval(timer);
+  };
+}, [charger]);
+
+  return { photos, erreur, chargement };
+}
